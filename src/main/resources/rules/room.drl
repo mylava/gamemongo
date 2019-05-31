@@ -1,0 +1,15 @@
+package foolox.room
+import com.foolox.game.common.repo.domain.GameRoom
+dialect  "mvel"
+
+//declare any global variables here
+
+
+rule "createroom"
+	salience 100
+	lock-on-active true
+    when
+        $gameRoom:GameRoom(extparams!= null , extparams.get("gametype") == "dizhu")
+    then
+        modify($gameRoom) {numofgames = $gameRoom.extparams["games"] };
+end
