@@ -48,8 +48,8 @@ public class LoginMongoTest {
 //        GamePlayer one = loginService.findPlayerByUsername(p.getUsername());
 //        System.out.println("find one="+one);
 //
-//        List<GamePlayer> playerNum = loginService.queryAll();
-//        System.out.println("queryAll="+playerNum);
+//        List<GamePlayer> maxPlayerNum = loginService.queryAll();
+//        System.out.println("queryAll="+maxPlayerNum);
 
 //        initMongo();
 

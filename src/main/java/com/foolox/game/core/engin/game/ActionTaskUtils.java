@@ -1,18 +1,17 @@
 package com.foolox.game.core.engin.game;
 
+import com.foolox.game.common.model.Game;
 import com.foolox.game.common.repo.domain.ClientSession;
 import com.foolox.game.common.repo.domain.GameRoom;
 import com.foolox.game.common.util.FooloxUtils;
 import com.foolox.game.common.util.client.FooloxClientContext;
-import com.foolox.game.common.util.redis.PlayerPrefix;
 import com.foolox.game.common.util.redis.RedisService;
 import com.foolox.game.constants.Command;
 import com.foolox.game.constants.PlayerStatus;
+import com.foolox.game.constants.RoomStatus;
 import com.foolox.game.core.FooloxDataContext;
-import com.foolox.game.core.engin.game.event.Board;
-import com.foolox.game.core.engin.game.event.DiZhuBoard;
-import com.foolox.game.core.engin.game.event.GamePlayer;
-import com.foolox.game.core.engin.game.event.RoomPlayers;
+import com.foolox.game.core.engin.game.event.*;
+import com.foolox.game.core.engin.game.state.GameEventType;
 import com.foolox.game.core.engin.game.task.AbstractTask;
 import com.foolox.game.core.logic.dizhu.CardsTypeEnum;
 import com.foolox.game.core.logic.dizhu.task.CreateAutoTask;
@@ -44,10 +43,22 @@ public class ActionTaskUtils {
         List<ClientSession> clientSessionList = FooloxUtils.getRoomClientSessionList(gameRoom.getId());
         //循环给房间的每个人发消息
         for (ClientSession session : clientSessionList) {
-            FooloxClient fooloxClient = FooloxClientContext.getFooloxClientCache().getClient(session.getId());
+            FooloxClient fooloxClient = FooloxClientContext.getFooloxClientCache().getClient(session.getUserId());
             if (fooloxClient != null && ifOnline(session.getId())) {
                 fooloxClient.sendEvent(FooloxDataContext.FOOLOX_MESSAGE_EVENT, message);
             }
+        }
+    }
+
+    /**
+     * 发送消息给 玩家
+     * @param userId
+     * @param message
+     */
+    public static void sendEvent(String userId, Message message) {
+        FooloxClient client = FooloxClientContext.getFooloxClientCache().getClient(userId);
+        if (client != null && ifOnline(userId)) {
+            FooloxClientContext.getFooloxClientCache().sendGameEventMessage(userId, FooloxDataContext.FOOLOX_MESSAGE_EVENT, message);
         }
     }
 
@@ -58,7 +69,7 @@ public class ActionTaskUtils {
      * @param gameRoom
      */
     public static void sendPlayers(FooloxClient fooloxClient, GameRoom gameRoom) {
-        if (ifOnline(fooloxClient.getUserid())) {
+        if (ifOnline(fooloxClient.getUserId())) {
             List<ClientSession> clientSessionList = FooloxUtils.getRoomClientSessionList(gameRoom.getId());
             fooloxClient.sendEvent(FooloxDataContext.FOOLOX_MESSAGE_EVENT, new RoomPlayers(gameRoom.getMaxPlayerNum(), clientSessionList, Command.GET_ROOM_PLAYERS));
         }
@@ -73,6 +84,47 @@ public class ActionTaskUtils {
     public static boolean ifOnline(String userId) {
         ClientSession clientSession = FooloxUtils.getClientSessionById(userId);
         return clientSession != null && PlayerStatus.OFFLINE != clientSession.getPlayerStatus() && PlayerStatus.LEAVE != clientSession.getPlayerStatus();
+    }
+
+    /**
+     * 通知就绪
+     *
+     * @param gameRoom
+     * @param game
+     */
+    public static void roomReady(GameRoom gameRoom, Game game) {
+        /**
+         *
+         */
+        boolean enough = false;
+        List<ClientSession> clientSessionList = FooloxUtils.getRoomClientSessionList(gameRoom.getId());
+        if (gameRoom.getMaxPlayerNum() == clientSessionList.size()) {
+            gameRoom.setStatus(RoomStatus.READY);
+            boolean hasnotready = false;
+            for (ClientSession player : clientSessionList) {
+                if (!player.isRoomready()) {
+                    hasnotready = true;
+                    break;
+                }
+            }
+            if (!hasnotready) {
+                enough = true;    //所有玩家都已经点击了 开始游戏
+            }
+
+            /**
+             * 检查当前玩家列表中的所有玩家是否已经全部 就绪，如果已经全部就绪，则开始游戏 ， 否则，只发送 roomready事件
+             */
+            ActionTaskUtils.sendEvent(Command.ROOM_READY, new RoomReady(gameRoom), gameRoom);
+        } else {
+            gameRoom.setStatus(RoomStatus.WAITTING);
+        }
+        FooloxUtils.setRoomById(gameRoom.getId(), gameRoom);
+        /**
+         * 所有人都已经举手
+         */
+        if (enough) {
+            game.change(gameRoom, GameEventType.ENOUGH.toString());    //通知状态机 , 此处应由状态机处理异步执行
+        }
     }
 
 

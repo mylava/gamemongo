@@ -58,7 +58,7 @@ public class GamePlayway {
     private String area;
 
     private String game;    //游戏类型 ： 麻将：地主：德州
-    private int playerNum;    //游戏人数
+    private int maxPlayerNum;    //最大游戏人数
 
     private int numofgames;//局数 ， 大厅游戏为 0 表示 无限
 

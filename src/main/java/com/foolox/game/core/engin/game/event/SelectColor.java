@@ -15,7 +15,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class SelectColor implements Message {
     private String banker;
-    private String userid;
+    private String userId;
     private int color = 10;
     private long time;
     private String event;
@@ -24,8 +24,8 @@ public class SelectColor implements Message {
     public SelectColor(String banker){
         this.banker = banker ;
     }
-    public SelectColor(String banker , String userid){
-        this.userid = userid ;
+    public SelectColor(String banker , String userId){
+        this.userId = userId;
         this.banker = banker ;
     }
 

@@ -49,6 +49,7 @@ public class ClientSession implements UserEvent {
      * 资产信息
      * --------------- ---------------
      */
+    private long coins;     //金币数量
 
     /**
      * --------------- ---------------
@@ -63,12 +64,13 @@ public class ClientSession implements UserEvent {
      * 游戏相关信息
      * --------------- ---------------
      */
-    private String roomid;      //加入的房间ID
+    private String roomId;      //加入的房间ID
     private boolean roomready;  //在房间中已经准备就绪
     private PlayerGameStatus playerGameStatus;    //玩家在游戏中的状态 ： READY : NOTREADY : PLAYING ：MANAGED/托管
     private PlayerStatus playerStatus;    //玩家类型 ： 普通玩家/托管玩家/AI/离开房间玩家
     private long playerindex;   //玩家进入房间的顺序
-    private long coins;     //金币数量
+
+    private boolean opendeal ;	//是否准备(同意开始)
 
 
 }

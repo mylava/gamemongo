@@ -13,34 +13,40 @@ import java.util.Map;
  * @date: 19/05/2019
  */
 public class FooloxClientCache {
-    private Map<String, FooloxClient> clientMap = new HashMap<String,FooloxClient>();
-    public FooloxClient getClient(String key){
-        return  clientMap.get(key);
+    private Map<String, FooloxClient> clientMap = new HashMap<String, FooloxClient>();
+
+    public FooloxClient getClient(String key) {
+        return clientMap.get(key);
     }
 
-    public void putClient(String userid , FooloxClient client){
-        clientMap.put(userid, client) ;
+    /**
+     * 保存UserId 与 FooloxClient 映射关系
+     * @param userId
+     * @param client
+     */
+    public void putClient(String userId, FooloxClient client) {
+        clientMap.put(userId, client);
     }
 
-    public void removeClient(String id){
-        FooloxClient FooloxClient = this.getClient(id) ;
-        clientMap.remove(id) ;
-        if(FooloxClient!=null){
-            clientMap.remove(FooloxClient.getUserid()) ;
+    public void removeClient(String userId) {
+        FooloxClient client = this.getClient(userId);
+        clientMap.remove(userId);
+        if (client != null) {
+            clientMap.remove(client.getUserId());
         }
     }
 
-    public void joinRoom(String userid, String roomid) {
-        FooloxClient FooloxClient = this.getClient(userid) ;
-        if(FooloxClient!=null){
+    public void joinRoom(String userId, String roomid) {
+        FooloxClient client = this.getClient(userId);
+        if (client != null) {
 //			FooloxClient.getClient().joinRoom(roomid);
         }
     }
 
-    public void sendGameEventMessage(String userid, String event, Message data) {
-        FooloxClient FooloxClient = this.getClient(userid) ;
-        if(FooloxClient!=null){
-            FooloxClient.sendEvent(event, data);
+    public void sendGameEventMessage(String userId, String event, Message data) {
+        FooloxClient client = this.getClient(userId);
+        if (client != null) {
+            client.sendEvent(event, data);
         }
     }
 }

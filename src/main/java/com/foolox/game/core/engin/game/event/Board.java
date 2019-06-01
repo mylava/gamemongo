@@ -124,21 +124,19 @@ public abstract class Board implements Message {
     /**
      * 出牌请求
      *
-     * @param orgi
      * @param auto
      * @param playCards
      * @return
      */
-    public abstract TakeCards takeCardsRequest(GameRoom gameRoom, Board board, GamePlayer gamePlayer, String orgi, boolean auto, byte[] playCards);
+    public abstract TakeCards takeCardsRequest(GameRoom gameRoom, Board board, GamePlayer gamePlayer, boolean auto, byte[] playCards);
 
     /**
      * 发牌动作
      *
      * @param gameRoom
      * @param board
-     * @param orgi
      */
-    public abstract void dealRequest(GameRoom gameRoom, Board board, String orgi, boolean reverse, String nextplayer);
+    public abstract void dealRequest(GameRoom gameRoom, Board board, boolean reverse, String nextplayer);
 
     /**
      * 下一个出牌玩家
@@ -146,9 +144,8 @@ public abstract class Board implements Message {
      * @param board
      * @param gameRoom
      * @param gamePlayer
-     * @param orgi
      */
-    public abstract void playcards(Board board, GameRoom gameRoom, GamePlayer gamePlayer, String orgi);
+    public abstract void playcards(Board board, GameRoom gameRoom, GamePlayer gamePlayer);
 
     /**
      * 玩家出牌

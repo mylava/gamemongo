@@ -21,6 +21,7 @@ public class FooloxDataContext {
     public static final String FOOLOX_MESSAGE_EVENT = "command";
     public static final String FOOLOX_PLAYERS_EVENT = "players";
     public static final String FOOLOX_GAMESTATUS_EVENT = "gamestatus";
+    public static final String FOOLOX_SEARCHROOM_EVENT = "searchroom";
 
     public static ApplicationContext getApplicationContext() {
         return applicationContext;

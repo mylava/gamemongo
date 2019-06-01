@@ -15,25 +15,24 @@ public class GamePrefix extends BasePrefix{
         super(ONE_DAY,prefix);
     }
 
-    //getGamePlayerCacheBean:
     //进入房间的用户与ClientSession对应关系  key(userId -- clientSession)
-//    public static final GamePrefix ROOM_ID_CLIENTSESSION = new GamePrefix("room:userid:clientsession");
-    //getGamePlayerCacheBean: roomid - clientsession list
-    public static final GamePrefix ROOM_ROOMID_CLIENTSESSION_LIST = new GamePrefix("room:roomid:clientsession_list");
+//    public static final GamePrefix ROOM_ID_CLIENTSESSION = new GamePrefix("room:userId:clientsession");
+    //getGamePlayerCacheBean: roomId - clientsession list
+    public static final GamePrefix ROOM_ROOMID_CLIENTSESSION_LIST = new GamePrefix("room:roomId:clientsession_list");
 
     //getRoomMappingCacheBean
     //进入房间的用户Id 与 gameRoomId的对应关系 key(userId -- gameroomId)
-    public static final GamePrefix ROOM_USERID_GAMEROOMID = new GamePrefix("room:userid:roomid");
+    public static final GamePrefix ROOM_USERID_GAMEROOMID = new GamePrefix("room:userId:roomId");
 
     //getGameRoomCacheBean
     //RoomId 与 GameRoom 的对应关系 key(RoomId -- GameRoom)
-    public static final GamePrefix ROOM_ROOMID_GAMEROOM = new GamePrefix("room:roomid:gameroom");
+    public static final GamePrefix ROOM_ROOMID_GAMEROOM = new GamePrefix("room:roomId:gameroom");
     //getQueneCache()
     //玩法 与 房间列表 的对应关系，用于匹配房间
     public static final GamePrefix ROOM_PLAYWAY_GAMEROOM_LIST = new GamePrefix("room:playwayId:gameroom_list");
 
     //getBoardCacheBean roomId -- board
-    public static final GamePrefix ROOM_ROOMID_BOARD = new GamePrefix("room:roomid:board");
+    public static final GamePrefix ROOM_ROOMID_BOARD = new GamePrefix("room:roomId:board");
 
     //PlayUserESRepository clientsessionid -- gameplayer
 //    public static final GamePrefix ROOM_CLIENTSESSIONID_GAMEPLAYER = new GamePrefix("room:clientsessionid:gameplayer");

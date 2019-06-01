@@ -28,11 +28,11 @@ public class FooloxMachineHandler {
      * 4、变更状态到下一步
      *
      * @param event the event
-     * @param state the state
+     * @param state the addState
      * @return true if event was accepted
      */
     public boolean handleEventWithState(Message<String> event, String state) {
-        FooloxExtentionTransitionConfigurer<String, String> transition = config.getTransitions().transition(state) ;
+        FooloxExtentionTransition<String, String> transition = config.getTransitions().transition(state) ;
         if(transition!=null){
             Action<String, String> action = transition.getAction() ;
             if(action!=null){

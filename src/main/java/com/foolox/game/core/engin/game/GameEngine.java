@@ -1,5 +1,6 @@
 package com.foolox.game.core.engin.game;
 
+import com.foolox.game.common.repo.dao.ClientSessionRepository;
 import com.foolox.game.common.repo.dao.GameRoomRepository;
 import com.foolox.game.common.repo.domain.ClientSession;
 import com.foolox.game.common.repo.domain.GamePlayway;
@@ -10,12 +11,12 @@ import com.foolox.game.common.util.GameUtils;
 import com.foolox.game.common.util.client.FooloxClientContext;
 import com.foolox.game.common.util.redis.GamePrefix;
 import com.foolox.game.common.util.redis.RedisService;
-import com.foolox.game.common.util.redis.SystemPrefix;
 import com.foolox.game.constants.*;
 import com.foolox.game.core.FooloxDataContext;
 import com.foolox.game.core.engin.game.event.*;
 import com.foolox.game.core.engin.game.state.GameEvent;
 import com.foolox.game.core.engin.game.state.GameEventType;
+import com.foolox.game.core.logic.majiang.task.CreateMJRaiseHandsTask;
 import com.foolox.game.core.server.FooloxClient;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -24,6 +25,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -57,7 +59,7 @@ public class GameEngine {
                 *//**
              * 解散房间的时候，只清理 AI
              *//*
-                if (clientSessionList.getPlayerStatus().equals(BMDataContext.PlayerTypeEnum.AI.toString())) {
+                if (clientSessionList.getPlayerStatus().equals(DataContext.PlayerTypeEnum.AI.toString())) {
                     CacheHelper.getGamePlayerCacheBean().delete(clientSessionList.getId(), orgi);
                     CacheHelper.getRoomMappingCacheBean().delete(clientSessionList.getId(), orgi);
                 }
@@ -65,13 +67,13 @@ public class GameEngine {
             /**
              * 先不删
              */
-//			UKTools.published(gameRoom, null, BMDataContext.getContext().getBean(GameRoomRepository.class) , BMDataContext.UserDataEventType.DELETE.toString());
+//			UKTools.published(gameRoom, null, DataContext.getContext().getBean(GameRoomRepository.class) , DataContext.UserDataEventType.DELETE.toString());
         }
     }
 
 
     public void gameRequest(ClientSession clientSession, FooloxClient fooloxClient) {
-        GameEvent gameEvent = gameRequest(clientSession.getId(), fooloxClient.getPlayway(), fooloxClient, clientSession);
+        GameEvent gameEvent = gameRequest(clientSession.getId(), fooloxClient.getPlaywayId(), fooloxClient, clientSession);
         if (gameEvent != null) {
             /**
              * 举手了，表示游戏可以开始了
@@ -115,45 +117,45 @@ public class GameEngine {
                 }
             } else {
                 //通知状态
-                GameUtils.getGame(fooloxClient.getPlayway()).change(gameEvent); //通知状态机 , 此处应由状态机处理异步执行
+                GameUtils.getGame(fooloxClient.getPlaywayId()).change(gameEvent); //通知状态机 , 此处应由状态机处理异步执行
             }
         }
     }
 
 
     /**
+     * 请求开始游戏
+     *
      * 玩家房间选择， 新请求，游戏撮合， 如果当前玩家是断线重连， 或者是 退出后进入的，则第一步检查是否已在房间
      * 如果已在房间，直接返回
-     *
-     * @param userid
+     * @param userId
      * @param playwayId
      * @param fooloxClient
      * @param clientSession
      * @return
      */
-    private GameEvent gameRequest(String userid, String playwayId, FooloxClient fooloxClient, ClientSession clientSession) {
+    public GameEvent gameRequest(String userId, String playwayId, FooloxClient fooloxClient, ClientSession clientSession) {
         GameEvent gameEvent = null;
         //通过userId取出roomID
-        String roomid = redisService.get(GamePrefix.ROOM_USERID_GAMEROOMID, clientSession.getUserId());
+        String roomId = FooloxUtils.getRoomIdByUserId(userId);
         //从系统配置中取出玩法
-        GamePlayway gamePlayway = redisService.get(SystemPrefix.CONFIG_ID_PLAYWAY, playwayId, GamePlayway.class);
+        GamePlayway gamePlayway = FooloxUtils.getGamePlaywayById(playwayId);
         boolean needtakequene = false;
         if (gamePlayway != null) {
-            gameEvent = new GameEvent(gamePlayway.getPlayerNum(), gamePlayway.getCardsNum());
+            gameEvent = new GameEvent(gamePlayway.getMaxPlayerNum(), gamePlayway.getCardsNum());
             GameRoom gameRoom = null;
             //已存在对应的房间----不用新建
-            if (!StringUtils.isBlank(roomid) && redisService.get(GamePrefix.ROOM_ROOMID_GAMEROOM, clientSession.getRoomid(), GameRoom.class) != null) {
-                gameRoom = redisService.get(GamePrefix.ROOM_ROOMID_GAMEROOM, clientSession.getRoomid(), GameRoom.class);
+            if (!StringUtils.isBlank(roomId) && FooloxUtils.getRoomById(roomId) != null) {
+                gameRoom = FooloxUtils.getRoomById(roomId);
             } else {
                 //----需要新建房间
                 //房卡游戏 , 创建ROOM
                 if (RoomType.FEE == fooloxClient.getRoomType()) {
-                    gameRoom = this.createGameRoom(gamePlayway, userid, true, fooloxClient);
+                    gameRoom = this.createGameRoom(gamePlayway, userId, true, fooloxClient);
                 } else {
                     /**
                      * 大厅游戏 ， 撮合游戏 , 发送异步消息，通知RingBuffer进行游戏撮合，撮合算法描述如下：
                      * 1、按照玩法查找
-                     *
                      */
                     gameRoom = poll(playwayId);
                     if (gameRoom != null) {
@@ -161,7 +163,7 @@ public class GameEngine {
                          * 修正获取gameroom获取的问题，因为删除房间的时候，为了不损失性能，没有将队列里的房间信息删除，如果有玩家获取到这个垃圾信息
                          * 则立即进行重新获取房间
                          */
-                        while (redisService.get(GamePrefix.ROOM_ROOMID_GAMEROOM, gameRoom.getId()) == null) {
+                        while (FooloxUtils.getRoomById(roomId) == null) {
                             gameRoom = poll(playwayId);
                             if (gameRoom == null) {
                                 break;
@@ -170,7 +172,7 @@ public class GameEngine {
                     }
 
                     if (gameRoom == null) {    //无房间 ， 需要
-                        gameRoom = this.createGameRoom(gamePlayway, userid, false, fooloxClient);
+                        gameRoom = this.createGameRoom(gamePlayway, userId, false, fooloxClient);
                     } else {
                         clientSession.setPlayerindex(System.currentTimeMillis());//从后往前坐，房主进入以后优先坐在 首位
                         needtakequene = true;
@@ -185,7 +187,7 @@ public class GameEngine {
                 /**
                  * 更新缓存
                  */
-                redisService.set(GamePrefix.ROOM_ROOMID_GAMEROOM, gameRoom.getId(), gameRoom);
+                FooloxUtils.setRoomById(gameRoom.getId(), gameRoom);
                 /**
                  * 如果当前房间到达了最大玩家数量，则不再加入到 撮合队列
                  */
@@ -212,9 +214,9 @@ public class GameEngine {
                 /**
                  * 如果当前房间到达了最大玩家数量，则不再加入到 撮合队列
                  */
-                if (haveInRoomPlayerList.size() < gamePlayway.getPlayerNum() && needtakequene) {
+                if (haveInRoomPlayerList.size() < gamePlayway.getMaxPlayerNum() && needtakequene) {
                     //未达到最大玩家数量，加入到游戏撮合 队列，继续撮合
-                    redisService.hset(GamePrefix.ROOM_PLAYWAY_GAMEROOM_LIST, playwayId, roomid, gameRoom);
+                    redisService.hset(GamePrefix.ROOM_PLAYWAY_GAMEROOM_LIST, playwayId, roomId, gameRoom);
                 }
             }
         }
@@ -240,9 +242,9 @@ public class GameEngine {
         if (playway != null) {
             gameRoom.setPlaywayId(playway.getId());
             gameRoom.setRoomtype(playway.getRoomtype());
-            gameRoom.setMaxPlayerNum(playway.getPlayerNum());
+            gameRoom.setMaxPlayerNum(playway.getMaxPlayerNum());
         }
-        gameRoom.setMaxPlayerNum(playway.getPlayerNum());
+        gameRoom.setMaxPlayerNum(playway.getMaxPlayerNum());
         gameRoom.setCardsnum(playway.getCardsNum());
 
         gameRoom.setCurpalyers(1);
@@ -296,7 +298,7 @@ public class GameEngine {
         boolean inroom = false;
         //已经在房间中的用户
         for (ClientSession session : clientSessionList) {
-            if (session.getId().equals(clientSession.getId())) {
+            if (session.getUserId().equals(clientSession.getUserId())) {
                 inroom = true;
                 break;
             }
@@ -305,7 +307,7 @@ public class GameEngine {
             clientSession.setPlayerindex(System.currentTimeMillis());
             clientSession.setPlayerGameStatus(PlayerGameStatus.READY);
             clientSession.setPlayerStatus(PlayerStatus.NORMAL);
-            clientSession.setRoomid(gameRoom.getId());
+            clientSession.setRoomId(gameRoom.getId());
             clientSession.setRoomready(false);
             clientSessionList.add(clientSession);
             //什么也没做
@@ -317,21 +319,22 @@ public class GameEngine {
         /**
          *	不管状态如何，玩家一定会加入到这个房间
          */
-        redisService.set(GamePrefix.ROOM_USERID_GAMEROOMID, clientSession.getId(), gameRoom.getId());
+        FooloxUtils.setRoomIdByUserId(clientSession.getUserId(), gameRoom.getId());
     }
 
     /**
      * 抢庄
      *
-     * @param roomid
-     * @param orgi
+     * @param roomId
+     * @param userId
+     * @param accept 是否抢庄
      * @return
      */
-    public void actionRequest(String roomid, ClientSession clientSession, String orgi, boolean accept) {
-        GameRoom gameRoom = redisService.get(GamePrefix.ROOM_ROOMID_GAMEROOM, roomid, GameRoom.class);
+    public void actionRequest(String roomId, String userId, boolean accept) {
+        GameRoom gameRoom = FooloxUtils.getRoomById(roomId);
         if (gameRoom != null) {
             DiZhuBoard board = FooloxUtils.getBoardByRoomId(gameRoom.getId(), DiZhuBoard.class);
-            GamePlayer player = board.getGamePlayer(clientSession.getId());
+            GamePlayer player = board.getGamePlayer(userId);
             board = ActionTaskUtils.doCatch(board, player, accept);
 
             ActionTaskUtils.sendEvent(Command.CATCH_RESULT, new GameBoard(player.getPlayuserId(), player.isAccept(), board.isDocatch(), board.getRatio()), gameRoom);
@@ -340,6 +343,331 @@ public class GameEngine {
             FooloxUtils.setBoardByRoomId(gameRoom.getId(), board);
             //1秒后开始执行任务
             FooloxGameTaskUtil.getExpireCache().put(gameRoom.getRoomid(), ActionTaskUtils.createAutoTask(1, gameRoom));
+        }
+    }
+
+    /**
+     * 提示出牌
+     *
+     * @param roomId
+     * @param clientSession
+     * @param cardtips      玩家的手牌
+     */
+    public void cardTips(String roomId, ClientSession clientSession, String cardtips) {
+        GameRoom gameRoom = FooloxUtils.getRoomById(roomId);
+        if (gameRoom != null) {
+            DiZhuBoard board = FooloxUtils.getBoardByRoomId(gameRoom.getId(), DiZhuBoard.class);
+            GamePlayer player = board.getGamePlayer(clientSession.getId());
+
+            TakeCards takeCards = null;
+
+            if (!StringUtils.isBlank(cardtips)) {
+                String[] cards = cardtips.split(",");
+                byte[] tipCards = new byte[cards.length];
+                for (int i = 0; i < cards.length; i++) {
+                    tipCards[i] = Byte.parseByte(cards[i]);
+                }
+                //从给出的牌中选出最小牌
+                takeCards = board.cardtip(player, board.getCardTips(player, tipCards));
+            }
+            if (takeCards == null || takeCards.getCards() == null) {
+                if (board.getLast() != null && !board.getLast().getUserid().equals(player.getPlayuserId())) {    //当前无出牌信息，刚开始出牌，或者出牌无玩家 压
+                    takeCards = board.cardtip(player, board.getLast());
+                } else {
+                    takeCards = board.cardtip(player, null);
+                }
+            }
+
+            if (takeCards.getCards() == null) {
+                takeCards.setAllow(false);    //没有 管的起的牌
+            }
+            ActionTaskUtils.sendEvent(Command.CARD_TIPS, takeCards, gameRoom);
+        }
+    }
+
+    /**
+     * 出牌，并校验出牌是否合规
+     *
+     * @param roomId
+     * @param auto   是否自动出牌，超时/托管/AI会调用 = true
+     * @return
+     */
+    public TakeCards takeCardsRequest(String roomId, String userId, boolean auto, byte[] playCards) {
+        TakeCards takeCards = null;
+        GameRoom gameRoom = FooloxUtils.getRoomById(roomId);
+        if (gameRoom != null) {
+            Board board = FooloxUtils.getBoardByRoomId(gameRoom.getId(), Board.class);
+            if (board != null) {
+                GamePlayer player = board.getGamePlayer(userId);
+                if (board.getNextplayer() != null && player.getPlayuserId().equals(board.getNextplayer().getNextplayer()) && board.getNextplayer().isTakecard() == false) {
+                    takeCards = board.takeCardsRequest(gameRoom, board, player, auto, playCards);
+                }
+            }
+        }
+        return takeCards;
+    }
+
+    /**
+     * 出牌，并校验出牌是否合规
+     *
+     * @param roomId
+     * @param userId
+     * @return
+     */
+    public SelectColor selectColorRequest(String roomId, String userId, String color) {
+        SelectColor selectColor = null;
+        GameRoom gameRoom = FooloxUtils.getRoomById(roomId);
+        if (gameRoom != null) {
+            Board board = FooloxUtils.getBoardByRoomId(gameRoom.getId(), Board.class);
+            if (board != null) {
+                //超时了 ， 执行自动出牌
+//				Player[] players = board.getPlayers() ;
+                /**
+                 * 检查是否所有玩家都已经选择完毕 ， 如果所有人都选择完毕，即可开始
+                 */
+                selectColor = new SelectColor(board.getBanker());
+                if (!StringUtils.isBlank(color)) {
+                    if (!StringUtils.isBlank(color) && color.matches("[0-2]{1}")) {
+                        selectColor.setColor(Integer.parseInt(color));
+                    } else {
+                        selectColor.setColor(0);
+                    }
+                    selectColor.setTime(System.currentTimeMillis());
+                    selectColor.setCommand(Command.SELECT_RESULT);
+
+                    selectColor.setUserId(userId);
+                }
+                boolean allselected = true;
+                for (GamePlayer ply : board.getGamePlayers()) {
+                    if (ply.getPlayuserId().equals(userId)) {
+                        if (!StringUtils.isBlank(color) && color.matches("[0-2]{1}")) {
+                            ply.setColor(Integer.parseInt(color));
+                        } else {
+                            ply.setColor(0);
+                        }
+                        ply.setSelected(true);
+                    }
+                    if (!ply.isSelected()) {
+                        allselected = false;
+                    }
+                }
+                FooloxUtils.setBoardByRoomId(gameRoom.getId(), board);   //更新缓存数据
+                ActionTaskUtils.sendEvent(Command.SELECT_RESULT, selectColor, gameRoom);
+                /**
+                 * 检查是否全部都已经 定缺， 如果已全部定缺， 则发送 开打
+                 */
+                if (allselected) {
+                    /**
+                     * 重置计时器，立即执行
+                     */
+                    FooloxGameTaskUtil.getExpireCache().put(gameRoom.getId(), new CreateMJRaiseHandsTask(1, gameRoom, gameRoom.getOrgi()));
+                    GameUtils.getGame(gameRoom.getPlaywayId()).change(gameRoom, GameEventType.RAISEHANDS.toString(), 0);
+                }
+            }
+        }
+        return selectColor;
+    }
+
+    /**
+     * 麻将 ， 杠碰吃胡过
+     *
+     * @param roomId
+     * @param userid
+     * @return
+     */
+    public ActionEvent actionEventRequest(String roomId, String userid, String action) {
+        ActionEvent actionEvent = null;
+        GameRoom gameRoom = FooloxUtils.getRoomById(roomId);
+        if (gameRoom != null) {
+            Board board = FooloxUtils.getBoardByRoomId(gameRoom.getId(), Board.class);
+            if (board != null) {
+                GamePlayer player = board.getGamePlayer(userid);
+                byte card = board.getLast().getCard();
+                actionEvent = new ActionEvent(board.getBanker(), userid, card, action);
+                if (!StringUtils.isBlank(action) && action.equals(MJAction.GUO.toString())) {
+                    /**
+                     * 用户动作，选择 了 过， 下一个玩家直接开始抓牌
+                     * bug，待修复：如果有多个玩家可以碰，则一个碰了，其他玩家就无法操作了
+                     */
+                    board.dealRequest(gameRoom, board, false, null);
+                } else if (!StringUtils.isBlank(action) && action.equals(MJAction.PENG.toString()) && allowAction(card, player.getActions(), MJAction.PENG.toString())) {
+                    Action playerAction = new Action(userid, action, card);
+
+                    int color = card / 36;
+                    int value = card % 36 / 4;
+                    List<Byte> otherCardList = new ArrayList<Byte>();
+                    for (int i = 0; i < player.getCards().length; i++) {
+                        if (player.getCards()[i] / 36 == color && (player.getCards()[i] % 36) / 4 == value) {
+                            continue;
+                        }
+                        otherCardList.add(player.getCards()[i]);
+                    }
+                    byte[] otherCards = new byte[otherCardList.size()];
+                    for (int i = 0; i < otherCardList.size(); i++) {
+                        otherCards[i] = otherCardList.get(i);
+                    }
+                    player.setCards(otherCards);
+                    player.getActions().add(playerAction);
+
+                    board.setNextplayer(new NextPlayer(userid, false));
+
+                    actionEvent.setTarget(board.getLast().getUserid());
+                    ActionTaskUtils.sendEvent(Command.SELECT_ACTION, actionEvent, gameRoom);
+
+                    FooloxUtils.setBoardByRoomId(gameRoom.getId(), board);   //更新缓存数据
+
+                    board.playcards(board, gameRoom, player);
+
+                } else if (!StringUtils.isBlank(action) && action.equals(MJAction.GANG.toString()) && allowAction(card, player.getActions(), MJAction.GANG.toString())) {
+                    if (board.getNextplayer().getNextplayer().equals(userid)) {
+                        card = GameUtils.getGangCard(player.getCards());
+                        actionEvent = new ActionEvent(board.getBanker(), userid, card, action);
+                        actionEvent.setActype(MJAction.AN_GANG.toString());
+                    } else {
+                        actionEvent.setActype(MJAction.MING_GANG.toString());    //还需要进一步区分一下是否 弯杠
+                    }
+                    /**
+                     * 检查是否有弯杠
+                     */
+                    Action playerAction = new Action(userid, action, card);
+                    for (Action ac : player.getActions()) {
+                        if (ac.getCard() == card && ac.getAction().equals(MJAction.PENG.toString())) {
+                            ac.setGang(true);
+                            ac.setType(MJAction.WAN_GANG.toString());
+                            playerAction = ac;
+                            break;
+                        }
+                    }
+                    int color = card / 36;
+                    int value = card % 36 / 4;
+                    List<Byte> otherCardList = new ArrayList<Byte>();
+                    for (int i = 0; i < player.getCards().length; i++) {
+                        if (player.getCards()[i] / 36 == color && (player.getCards()[i] % 36) / 4 == value) {
+                            continue;
+                        }
+                        otherCardList.add(player.getCards()[i]);
+                    }
+                    byte[] otherCards = new byte[otherCardList.size()];
+                    for (int i = 0; i < otherCardList.size(); i++) {
+                        otherCards[i] = otherCardList.get(i);
+                    }
+                    player.setCards(otherCards);
+                    player.getActions().add(playerAction);
+
+                    actionEvent.setTarget("all");    //只有明杠 是 其他人打出的 ， target 是单一对象
+
+                    ActionTaskUtils.sendEvent(Command.SELECT_ACTION, actionEvent, gameRoom);
+
+                    /**
+                     * 杠了以后， 从 当前 牌的 最后一张开始抓牌
+                     */
+                    board.dealRequest(gameRoom, board, true, userid);
+                } else if (!StringUtils.isBlank(action) && action.equals(MJAction.HU.toString())) {    //判断下是不是 真的胡了 ，避免外挂乱发的数据
+                    Action playerAction = new Action(userid, action, card);
+                    player.getActions().add(playerAction);
+                    GamePlayway gamePlayway = FooloxUtils.getGamePlaywayById(gameRoom.getPlaywayId());
+                    /**
+                     * 不同的胡牌方式，处理流程不同，推倒胡，直接进入结束牌局 ， 血战：当前玩家结束牌局，血流：继续进行，下一个玩家
+                     */
+                    if (gamePlayway.getWintype().equals(MJWinType.TUI.toString())) {        //推倒胡
+                        GameUtils.getGame(gameRoom.getPlaywayId()).change(gameRoom, GameEventType.ALLCARDS.toString(), 0);    //打完牌了,通知结算
+                    } else { //血战到底
+                        if (gamePlayway.getWintype().equals(MJWinType.END.toString())) {        //标记当前玩家的状态 是 已结束
+                            player.setEnd(true);
+                        }
+                        player.setHu(true);    //标记已经胡了
+                        /**
+                         * 当前 Player打上标记，已经胡牌了，杠碰吃就不会再有了
+                         */
+                        /**
+                         * 下一个玩家出牌
+                         */
+                        player = board.nextPlayer(board.index(player.getPlayuserId()));
+                        /**
+                         * 记录胡牌的相关信息，推倒胡 | 血战 | 血流
+                         */
+                        board.setNextplayer(new NextPlayer(player.getPlayuserId(), false));
+
+                        actionEvent.setTarget(board.getLast().getUserid());
+                        /**
+                         * 用于客户端播放 胡牌的 动画 ， 点胡 和 自摸 ，播放不同的动画效果
+                         */
+                        ActionTaskUtils.sendEvent(Command.SELECT_ACTION, actionEvent, gameRoom);
+                        FooloxUtils.setBoardByRoomId(gameRoom.getId(), board);   //更新缓存数据
+
+                        /**
+                         * 杠了以后， 从 当前 牌的 最后一张开始抓牌
+                         */
+                        board.dealRequest(gameRoom, board, true, player.getPlayuserId());
+                    }
+                }
+            }
+        }
+        return actionEvent;
+    }
+
+    /**
+     * 游戏开局
+     *
+     * @param roomId
+     * @param clientSession
+     * @param opendeal      是否同意开局
+     */
+    public void startGameRequest(String roomId, ClientSession clientSession, boolean opendeal) {
+        GameRoom gameRoom = FooloxUtils.getRoomById(roomId);
+        if (gameRoom != null) {
+            clientSession.setRoomready(true);
+            if (opendeal) {
+                clientSession.setOpendeal(true);
+            }
+            FooloxUtils.addRoomClientSession(roomId, clientSession);
+            ActionTaskUtils.roomReady(gameRoom, GameUtils.getGame(gameRoom.getPlaywayId()));
+
+            FooloxUtils.published(clientSession, FooloxDataContext.getApplicationContext().getBean(ClientSessionRepository.class));
+            ActionTaskUtils.sendEvent(clientSession.getId(), new Playeready(clientSession.getId(), Command.PLAYER_READY));
+        }
+    }
+
+    /**
+     * 检查是否所有玩家 都已经处于就绪状态，如果所有玩家都点击了 继续开始游戏，则发送一个 ALL事件，继续游戏，
+     * 否则，等待10秒时间，到期后如果玩家还没有就绪，就将该玩家T出去，等待新玩家加入
+     *
+     * @param roomId
+     * @param clientSession
+     * @param fooloxClient
+     * @param opendeal
+     */
+    public void restartRequest(String roomId, ClientSession clientSession, FooloxClient fooloxClient, boolean opendeal) {
+        boolean notReady = false;
+        List<ClientSession> clientSessionList = null;
+        GameRoom gameRoom = null;
+        if (!StringUtils.isBlank(roomId)) {
+            gameRoom = FooloxUtils.getRoomById(roomId);
+            clientSessionList = FooloxUtils.getRoomClientSessionList(roomId);
+            if (clientSessionList != null && clientSessionList.size() > 0) {
+                /**
+                 * 有一个 等待
+                 */
+                for (ClientSession session : clientSessionList) {
+                    if (!session.isRoomready()) {
+                        notReady = true;
+                        break;
+                    }
+                }
+            }
+        }
+        if (notReady && gameRoom != null) {
+            /**
+             * 需要增加一个状态机的触发事件：等待其他人就绪，超过5秒以后未就绪的，直接踢掉，然后等待机器人加入
+             */
+            this.startGameRequest(roomId, clientSession, opendeal);
+        } else if (clientSessionList == null || clientSessionList.size() == 0 || gameRoom == null) {//房间已解散
+            gameRequest(clientSession.getUserId(), fooloxClient.getPlaywayId(), fooloxClient, clientSession);
+            /**
+             * 结算后重新开始游戏
+             */
+            clientSession.setRoomready(true);
+            FooloxUtils.addRoomClientSession(roomId, clientSession);
         }
     }
 
@@ -362,6 +690,28 @@ public class GameEngine {
             }
         }
         return gameRoom;
+    }
+
+    /**
+     * 为防止同步数据错误，校验是否允许刚碰牌
+     *
+     * @param card
+     * @param actions
+     * @return
+     */
+    private boolean allowAction(byte card, List<Action> actions, String actiontype) {
+        int take_color = card / 36;
+        int take_value = card % 36 / 4;
+        boolean allow = true;
+        for (Action action : actions) {
+            int color = action.getCard() / 36;
+            int value = action.getCard() % 36 / 4;
+            if (take_color == color && take_value == value && action.getAction().equals(actiontype)) {
+                allow = false;
+                break;
+            }
+        }
+        return allow;
     }
 
 }

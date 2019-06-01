@@ -2,6 +2,7 @@ package com.foolox.game.config;
 
 import com.foolox.game.common.repo.dao.GamePlaywayRepository;
 import com.foolox.game.common.repo.domain.GamePlayway;
+import com.foolox.game.common.util.FooloxUtils;
 import com.foolox.game.common.util.redis.RedisService;
 import com.foolox.game.common.util.redis.SystemPrefix;
 import com.foolox.game.core.FooloxDataContext;
@@ -28,9 +29,6 @@ public class StartedEventListener implements ApplicationListener<ContextRefreshe
     @Resource
     private GamePlaywayRepository playwayRepository;
 
-    @Resource
-    private RedisService redisService;
-
     @Override
     public void onApplicationEvent(ContextRefreshedEvent event) {
 
@@ -43,7 +41,7 @@ public class StartedEventListener implements ApplicationListener<ContextRefreshe
         List<GamePlayway> gamePlaywayList = playwayRepository.findAll() ;
         if(gamePlaywayList != null){
             for(GamePlayway playway : gamePlaywayList){
-                redisService.set(SystemPrefix.CONFIG_ID_PLAYWAY, playway.getId(), playway);
+                FooloxUtils.setGamePlaywayById(playway.getId(), playway);
             }
         }
 

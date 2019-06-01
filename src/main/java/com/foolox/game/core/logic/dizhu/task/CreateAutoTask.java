@@ -95,7 +95,7 @@ public class CreateAutoTask extends AbstractTask implements FooloxGameTask {
         if (catchPlayer != null) {
             catchPlayer.setDocatch(true);//抢过了
 //			board.setBanker(catchPlayer.getPlayuser());	//玩家 点击 抢地主按钮后 赋值
-            sendEvent(Command.CATCH_RESULT, new GameBoard(catchPlayer.getPlayuserId(), board.isDocatch(), catchPlayer.isAccept(), board.getRatio()), gameRoom);
+            sendEvent(Command.CATCH, new GameBoard(catchPlayer.getPlayuserId(), board.isDocatch(), catchPlayer.isAccept(), board.getRatio()), gameRoom);
 
             boolean isNormal = true;
             List<ClientSession> clientSessionList = FooloxUtils.getRoomClientSessionList(gameRoom.getId());

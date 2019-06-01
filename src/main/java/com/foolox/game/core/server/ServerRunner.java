@@ -45,7 +45,7 @@ public class ServerRunner implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-//        initGame();
+        initGame();
         server.start();
         FooloxDataContext.setServerRunning(true);
     }

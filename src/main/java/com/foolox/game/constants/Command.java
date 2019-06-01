@@ -24,7 +24,19 @@ public enum Command {
     //抢地主
     CATCH,
     //抢地主结果
-    CATCH_RESULT;
+    CATCH_RESULT,
+    //按提示出最小的牌
+    CARD_TIPS,
+    //上一手牌
+    LAST_HANDS,
+    //选择碰杠胡过
+    SELECT_ACTION,
+    //房间所有人都已准备 -->  可以开始游戏了
+    ROOM_READY,
+    //玩家已经准备好
+    PLAYER_READY,
+    //聊天
+    MESSAGE;
 
     @Override
     public String toString() {

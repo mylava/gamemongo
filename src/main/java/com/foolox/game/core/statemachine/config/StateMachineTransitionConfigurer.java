@@ -1,6 +1,6 @@
 package com.foolox.game.core.statemachine.config;
 
-import com.foolox.game.core.statemachine.impl.FooloxExtentionTransitionConfigurer;
+import com.foolox.game.core.statemachine.impl.FooloxExtentionTransition;
 
 /**
  * comment: 状态机转换配置接口
@@ -12,12 +12,12 @@ public interface StateMachineTransitionConfigurer<S, E> {
     /**
      * Gets a configurer for external transition.
      *
-     * @return {@link ExternalTransitionConfigurer} for chaining
+     * @return {@link ExternalTransition} for chaining
      * @throws Exception if configuration error happens
      */
-    ExternalTransitionConfigurer<S, E> withExternal() throws Exception;
+    ExternalTransition<S, E> withExternal() throws Exception;
 
-    void apply(FooloxExtentionTransitionConfigurer<S, E> transition);
+    void apply(FooloxExtentionTransition<S, E> transition);
 
-    FooloxExtentionTransitionConfigurer<S,E> transition(S event) ;
+    FooloxExtentionTransition<S,E> transition(S event) ;
 }

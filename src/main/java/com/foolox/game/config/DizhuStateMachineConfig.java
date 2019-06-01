@@ -6,7 +6,7 @@ import com.foolox.game.core.logic.*;
 import com.foolox.game.core.logic.dizhu.action.AutoAction;
 import com.foolox.game.core.logic.dizhu.action.RaiseHandsAction;
 import com.foolox.game.core.statemachine.FooloxStateMachine;
-import com.foolox.game.core.statemachine.config.StateConfigurer;
+import com.foolox.game.core.statemachine.config.State;
 import com.foolox.game.core.statemachine.config.StateMachineTransitionConfigurer;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -27,17 +27,16 @@ public class DizhuStateMachineConfig<T, S> {
         return fooloxStateMachine;
     }
 
-    public void configure(StateConfigurer<String, String> states)
+    public void configure(State<String, String> states)
             throws Exception {
         states
-                .withStates()
                 .initial(RoomStatus.NONE.toString())
-                .state(RoomStatus.CRERATED.toString())
-                .state(RoomStatus.WAITTING.toString())
-                .state(RoomStatus.READY.toString())
-                .state(RoomStatus.BEGIN.toString())
-                .state(RoomStatus.PLAY.toString())
-                .state(RoomStatus.END.toString());
+                .addState(RoomStatus.CRERATED.toString())
+                .addState(RoomStatus.WAITTING.toString())
+                .addState(RoomStatus.READY.toString())
+                .addState(RoomStatus.BEGIN.toString())
+                .addState(RoomStatus.PLAY.toString())
+                .addState(RoomStatus.END.toString());
     }
 
     public void configure(StateMachineTransitionConfigurer<String, String> transitions)

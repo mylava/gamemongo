@@ -1,6 +1,6 @@
 package com.foolox.game.core.statemachine.impl;
 
-import com.foolox.game.core.statemachine.config.ExternalTransitionConfigurer;
+import com.foolox.game.core.statemachine.config.ExternalTransition;
 import com.foolox.game.core.statemachine.config.StateMachineTransitionConfigurer;
 
 import java.util.HashMap;
@@ -14,20 +14,20 @@ import java.util.Map;
  */
 public class FooloxTransitionConfigurer<T,S> implements StateMachineTransitionConfigurer<T,S> {
 
-    private Map<S, FooloxExtentionTransitionConfigurer<T, S>> transitions = new HashMap<S,FooloxExtentionTransitionConfigurer<T,S>>();
+    private Map<S, FooloxExtentionTransition<T, S>> transitions = new HashMap<S,FooloxExtentionTransition<T,S>>();
 
     @Override
-    public ExternalTransitionConfigurer<T, S> withExternal() throws Exception {
-        return new FooloxExtentionTransitionConfigurer<T, S>(this);
+    public ExternalTransition<T, S> withExternal() throws Exception {
+        return new FooloxExtentionTransition<T, S>(this);
     }
 
     @Override
-    public void apply(FooloxExtentionTransitionConfigurer<T, S> transition) {
+    public void apply(FooloxExtentionTransition<T, S> transition) {
         transitions.put(transition.getEvent(), transition);
     }
 
     @Override
-    public FooloxExtentionTransitionConfigurer<T, S> transition(T event) {
+    public FooloxExtentionTransition<T, S> transition(T event) {
         return transitions.get(event);
     }
 }

@@ -201,7 +201,7 @@ public class DiZhuBoard extends Board {
 
     @Override
     public TakeCards takeCardsRequest(GameRoom gameRoom, Board board, GamePlayer gamePlayer,
-                                      String orgi, boolean auto, byte[] playCards) {
+                                      boolean auto, byte[] playCards) {
         TakeCards takeCards = null;
         boolean automic = false;
         //超时了 ， 执行自动出牌
@@ -323,15 +323,14 @@ public class DiZhuBoard extends Board {
     }
 
     @Override
-    public void dealRequest(GameRoom gameRoom, Board board, String orgi, boolean reverse, String nextplayer) {
+    public void dealRequest(GameRoom gameRoom, Board board, boolean reverse, String nextplayer) {
         /**
          * 斗地主无发牌动作
          */
     }
 
     @Override
-    public void playcards(Board board, GameRoom gameRoom, GamePlayer gamePlayer,
-                          String orgi) {
+    public void playcards(Board board, GameRoom gameRoom, GamePlayer gamePlayer) {
     }
 
     @Override

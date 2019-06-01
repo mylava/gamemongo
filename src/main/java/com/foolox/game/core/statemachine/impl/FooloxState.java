@@ -1,6 +1,6 @@
 package com.foolox.game.core.statemachine.impl;
 
-import com.foolox.game.core.statemachine.config.StateConfigurer;
+import com.foolox.game.core.statemachine.config.State;
 
 import java.util.LinkedList;
 
@@ -10,25 +10,25 @@ import java.util.LinkedList;
  * @author: lipengfei
  * @date: 29/05/2019
  */
-public class FooloxStateConfigurer<T,S> implements StateConfigurer<T,S> {
+public class FooloxState<T, S> implements State<T, S> {
     private LinkedList<T> stateContextList = new LinkedList<T>();
-    private T initial ;	//初始状态
+    private T initial;    //初始状态
 
     @Override
-    public StateConfigurer<T,S> initial(T initial) {
-        this.initial = initial ;
-        this.stateContextList.add(initial) ;	//首个元素
+    public State<T, S> initial(T initial) {
+        this.initial = initial;
+        this.stateContextList.add(initial);    //首个元素
         return this;
     }
 
     @Override
-    public StateConfigurer<T,S> state(T state) {
-        this.stateContextList.add(state) ;
+    public State<T, S> addState(T state) {
+        this.stateContextList.add(state);
         return this;
     }
 
     @Override
-    public StateConfigurer<T,S> withStates() throws Exception {
+    public State<T, S> withStates() throws Exception {
         return this;
     }
 

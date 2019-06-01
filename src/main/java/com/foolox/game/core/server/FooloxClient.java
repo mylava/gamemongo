@@ -9,7 +9,6 @@ import org.tio.websocket.common.Opcode;
 import org.tio.websocket.common.WsResponse;
 
 import java.io.IOException;
-import java.io.Serializable;
 import java.util.Map;
 
 /**
@@ -21,7 +20,7 @@ import java.util.Map;
 @Data
 public class FooloxClient {
     private GameServer server;
-    private String userid;
+    private String userId;
     //用于前端传命令
     private String command;
     //用于鉴权
@@ -29,7 +28,7 @@ public class FooloxClient {
     //建立心跳的时间
     private long time;
     //玩法
-    private String playway;
+    private String playwayId;
     //房间ID
     private String room;
     //游戏模式：大厅、房卡、俱乐部
@@ -37,10 +36,12 @@ public class FooloxClient {
     //额外参数
     private Map<String,  String> extparams ;
 
+    private String data;
+
     public void sendEvent(String event, Message msg) {
         try {
             msg.setEvent(event);
-            Aio.sendToUser(this.server.getServerGroupContext(), this.userid, convertToTextResponse(msg));
+            Aio.sendToUser(this.server.getServerGroupContext(), this.userId, convertToTextResponse(msg));
         } catch (IOException e) {
             e.printStackTrace();
         }

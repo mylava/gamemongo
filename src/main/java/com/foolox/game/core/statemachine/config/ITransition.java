@@ -9,11 +9,11 @@ import com.foolox.game.core.statemachine.action.Action;
  * @date: 29/05/2019
  */
 //
-public interface TransitionConfigurer <T, S, E> extends AbstractTransitionConfigurer<StateMachineTransitionConfigurer<S, E>> {
+public interface ITransition<T, S, E, I> extends Transition<I> {
     /**
      * 为当前Transition指定一个源状态
      *
-     * @param source the source state {@code S}
+     * @param source the source addState {@code S}
      * @return configurer for chaining
      */
     T source(S source);
@@ -49,4 +49,5 @@ public interface TransitionConfigurer <T, S, E> extends AbstractTransitionConfig
      * @return configurer for chaining
      */
     T action(Action<S, E> action, Action<S, E> error);
+
 }

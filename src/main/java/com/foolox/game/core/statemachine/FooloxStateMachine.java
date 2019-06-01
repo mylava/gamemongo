@@ -1,8 +1,8 @@
 package com.foolox.game.core.statemachine;
 
-import com.foolox.game.core.statemachine.config.StateConfigurer;
+import com.foolox.game.core.statemachine.config.State;
 import com.foolox.game.core.statemachine.config.StateMachineTransitionConfigurer;
-import com.foolox.game.core.statemachine.impl.FooloxStateConfigurer;
+import com.foolox.game.core.statemachine.impl.FooloxState;
 import com.foolox.game.core.statemachine.impl.FooloxTransitionConfigurer;
 
 /**
@@ -15,13 +15,13 @@ public class FooloxStateMachine<T, S> {
     /**
      *
      */
-    private StateConfigurer<String,String> config = new FooloxStateConfigurer<>();
+    private State<String,String> config = new FooloxState<>();
     private StateMachineTransitionConfigurer<T,S> transitions = new FooloxTransitionConfigurer<T,S>() ;
 
-    public StateConfigurer<String,String> getConfig() {
+    public State<String,String> getConfig() {
         return config;
     }
-    public void setConfig(StateConfigurer<String,String> config) {
+    public void setConfig(State<String,String> config) {
         this.config = config;
     }
     public StateMachineTransitionConfigurer<T,S> getTransitions() {

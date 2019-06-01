@@ -22,7 +22,7 @@ public class GameServerConfiguration {
     private GameEventHandler handler = new GameEventHandler();
 
     @Bean
-    public GameServer socketIOServer() throws NoSuchAlgorithmException, IOException {
+    public GameServer socketIOServer() throws IOException {
         GameServer server = new GameServer(port , handler) ;
         handler.setServer(server);
         return server;
