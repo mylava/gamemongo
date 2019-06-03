@@ -1,31 +1,27 @@
 package com.foolox.game.core.statemachine.config;
 
+import com.foolox.game.constants.RoomStatus;
+
+import java.util.LinkedList;
+
 /**
- * comment: 状态配置
+ * comment:
  *
  * @author: lipengfei
- * @date: 29/05/2019
+ * @date: 03/06/2019
  */
-public interface State<S, E> {
-    /**
-     * Specify a initial addState {@code S}.
-     * 指定初始状态
-     *
-     * @param initial the initial addState
-     * @return configurer for chaining
-     */
-    State<S, E> initial(S initial);
+public class State {
+    private LinkedList<RoomStatus> stateContextList = new LinkedList();
+    private RoomStatus initial;    //初始状态
 
-    /**
-     * Specify a addState {@code S}.
-     * 指定状态
-     *
-     * @param state the addState
-     * @return configurer for chaining
-     */
-    State<S, E> addState(S state);
+    public State firstState(RoomStatus initial) {
+        this.initial = initial ;
+        this.stateContextList.add(initial) ;	//首个元素
+        return this;
+    }
 
-
-
-    State<S, E> withStates() throws Exception;
+    public State nextState(RoomStatus state) {
+        this.stateContextList.add(state) ;
+        return this;
+    }
 }

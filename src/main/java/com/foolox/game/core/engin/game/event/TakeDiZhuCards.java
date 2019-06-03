@@ -5,6 +5,7 @@ import com.foolox.game.core.engin.game.ActionTaskUtils;
 import com.foolox.game.core.engin.game.CardType;
 import com.foolox.game.core.engin.game.Message;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.util.ArrayList;
@@ -18,6 +19,7 @@ import java.util.Map;
  * @date: 30/05/2019
  */
 @Data
+@EqualsAndHashCode(callSuper = true)
 public class TakeDiZhuCards extends TakeCards implements Message {
     private String banker;
     private boolean allow;        //符合出牌规则 ，

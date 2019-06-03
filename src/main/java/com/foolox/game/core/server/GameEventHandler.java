@@ -98,7 +98,7 @@ public class GameEventHandler implements IWsMsgHandler {
                     case "joinroom":
                         this.onJoinRoom(fooloxClient);
                         break;
-                    case "playerGameStatus":
+                    case "gamestatus":
                         this.onGameStatus(fooloxClient);
                         break;
                     case "docatch":
@@ -193,9 +193,9 @@ public class GameEventHandler implements IWsMsgHandler {
                 //刷新玩家信息到缓存
                 FooloxUtils.setClientSessionById(userId, clientSession);
 
-                //处理玩家不在游戏中
+                //之前占用的有房间，且游戏已经打完了，则清除
                 GameUtils.syncNotPlaying(clientSession);
-                //异步保存ClientSession到数据库
+                //异步保存ClientSession到数据库 (登录日志)
                 FooloxUtils.published(clientSession, FooloxDataContext.getApplicationContext().getBean(ClientSessionRepository.class));
                 //请求游戏
                 FooloxDataContext.getGameEngine().gameRequest(clientSession, fooloxClient);
@@ -212,6 +212,7 @@ public class GameEventHandler implements IWsMsgHandler {
         String token = fooloxClient.getToken();
         String userId = fooloxClient.getUserId();
         GameStatus gameStatus = new GameStatus();
+        //设置玩家为未就绪状态（不能游戏）
         gameStatus.setGamestatus(PlayerGameStatus.NOTREADY.toString());
         if (!StringUtils.isBlank(token) && !StringUtils.isBlank(userId)) {
             String redisToken = redisService.get(PlayerPrefix.TOKEN, userId);
@@ -219,25 +220,34 @@ public class GameEventHandler implements IWsMsgHandler {
             if (redisToken != null && token.equals(redisToken)) {
                 ClientSession clientSession = FooloxUtils.getClientSessionById(userId);
                 if (null != clientSession) {
+                    //鉴权通过，更新玩家状态为就绪（可以游戏）
                     gameStatus.setGamestatus(PlayerGameStatus.READY.toString());
+                    //查看玩家是否在房间内
                     String roomId = FooloxUtils.getRoomIdByUserId(userId);
+                    //Room 和 Board 都不为空，表示已经在游戏中（断线重连情况）
                     if (!StringUtils.isBlank(roomId) && FooloxUtils.getBoardByRoomId(roomId, Board.class) != null) {
-                        gameStatus.setUserid(clientSession.getId());
+                        gameStatus.setUserid(clientSession.getUserId());
                         gameStatus.setOrgi(clientSession.getOrgi());
+                        //读取房间信息
                         GameRoom gameRoom = FooloxUtils.getRoomById(roomId);
+                        //读取玩法信息
                         GamePlayway gamePlayway = FooloxUtils.getGamePlaywayById(gameRoom.getPlaywayId());
                         gameStatus.setGametype(gamePlayway.getCode());
                         gameStatus.setPlayway(gamePlayway.getId());
+                        //更新玩家状态为游戏中
                         gameStatus.setGamestatus(PlayerGameStatus.PLAYING.toString());
+                        //房卡游戏
                         if (gameRoom.isCardroom()) {
                             gameStatus.setCardroom(true);
                         }
                     }
                 }
             } else {
+                //更新状态为超时，客户端提示重新登录
                 gameStatus.setGamestatus(PlayerGameStatus.TIMEOUT.toString());
             }
         }
+        //发送gameStatus到客户端
         fooloxClient.sendEvent(FooloxDataContext.FOOLOX_GAMESTATUS_EVENT, gameStatus);
     }
 

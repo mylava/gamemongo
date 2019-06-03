@@ -1,24 +1,27 @@
-package com.foolox.game.core.statemachine.impl;
+package com.foolox.game.core.statemachine.handler;
 
-import com.foolox.game.core.statemachine.FooloxStateMachine;
+import com.foolox.game.core.engin.game.state.PlayerEvent;
 import com.foolox.game.core.statemachine.action.Action;
+import com.foolox.game.core.statemachine.StateMachine;
+import com.foolox.game.core.statemachine.config.Transition;
 import com.foolox.game.core.statemachine.message.Message;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 /**
  * comment:
  *
  * @author: lipengfei
- * @date: 29/05/2019
+ * @date: 03/06/2019
  */
+@Data
 @Slf4j
-public class FooloxMachineHandler {
-
-    private FooloxStateMachine<String, String> config;
-
-    public FooloxMachineHandler(FooloxStateMachine<String, String> config) {
-        this.config = config;
-    }
+@NoArgsConstructor
+@AllArgsConstructor
+public class StateMachineHandler {
+    private StateMachine stateMachine;
 
     /**
      * Handle event with entity.
@@ -27,28 +30,28 @@ public class FooloxMachineHandler {
      * 3、校验当前状态是否是从 上一个状态 转变来的（不做实现）
      * 4、变更状态到下一步
      *
-     * @param event the event
-     * @param state the addState
+     * @param event   the event
+     * @param message the message
      * @return true if event was accepted
      */
-    public boolean handleEventWithState(Message<String> event, String state) {
-        FooloxExtentionTransition<String, String> transition = config.getTransitions().transition(state) ;
-        if(transition!=null){
-            Action<String, String> action = transition.getAction() ;
-            if(action!=null){
+    public boolean handleEventWithState(Message message, PlayerEvent event) {
+        Transition transition = stateMachine.getTransitionContext().get(event);
+        if (transition != null) {
+            Action action = transition.getAction();
+            if (action != null) {
                 /**
                  * 1、任务的执行应该为异步执行，可以考虑放入 RingBuffer中处理
                  * 2、启用异步线程并增加线程池处理
                  */
-                action.execute(event , transition);
+                action.execute(message, transition);
                 /**
                  * 修改当前状态，并持久化
                  */
-            }else{
+            } else {
                 //抛出异常
                 log.info("Transition's Action is null");
             }
         }
-        return config!=null;
+        return stateMachine != null;
     }
 }

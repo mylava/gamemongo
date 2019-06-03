@@ -13,7 +13,7 @@ import com.foolox.game.core.engin.game.event.Board;
 import com.foolox.game.core.engin.game.event.GamePlayer;
 import com.foolox.game.core.engin.game.event.NextPlayer;
 import com.foolox.game.core.engin.game.event.SelectColor;
-import com.foolox.game.core.engin.game.state.GameEventType;
+import com.foolox.game.core.engin.game.state.PlayerEvent;
 import com.foolox.game.core.engin.game.task.AbstractTask;
 
 /**
@@ -79,9 +79,9 @@ public class CreateMJRaiseHandsTask extends AbstractTask implements FooloxGameTa
             ClientSession clientSession = ActionTaskUtils.getClientSession(gameRoom.getId(), banker.getPlayuserId());
 
             if (PlayerStatus.NORMAL == clientSession.getPlayerStatus()) {
-                super.getGame(gameRoom.getPlaywayId()).change(gameRoom, GameEventType.PLAYCARDS.toString(), 8);    //应该从 游戏后台配置参数中获取
+                super.getGame(gameRoom.getPlaywayId()).change(gameRoom, PlayerEvent.PLAYCARDS, 8);    //应该从 游戏后台配置参数中获取
             } else {
-                super.getGame(gameRoom.getPlaywayId()).change(gameRoom, GameEventType.PLAYCARDS.toString(), 3);    //应该从游戏后台配置参数中获取
+                super.getGame(gameRoom.getPlaywayId()).change(gameRoom, PlayerEvent.PLAYCARDS, 3);    //应该从游戏后台配置参数中获取
             }
         }
     }

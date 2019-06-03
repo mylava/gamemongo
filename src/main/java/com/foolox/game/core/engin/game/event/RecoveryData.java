@@ -25,7 +25,7 @@ public class RecoveryData implements Message {
     private TakeCards last;
     private Banker banker;
     private String nextplayer;//正在出牌的玩家
-    private CardsInfo[] cardsnum;
+    private CardsInfo[] cardsnum; //手牌信息
     private int time;        //计时器剩余时间
     private boolean automic;    //本轮第一个出牌，不允许出现不出按钮
     private GameBoard data;

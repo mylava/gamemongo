@@ -6,6 +6,7 @@ import com.foolox.game.constants.PlayerStatus;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.Date;
@@ -26,6 +27,7 @@ public class ClientSession implements UserEvent {
      * 基本信息,与房间、游戏无关
      * --------------- ---------------
      */
+    @Id
     private String id;
     private String token;
     private String userId;

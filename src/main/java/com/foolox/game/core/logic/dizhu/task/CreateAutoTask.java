@@ -10,7 +10,7 @@ import com.foolox.game.core.engin.game.FooloxGameTask;
 import com.foolox.game.core.engin.game.GameBoard;
 import com.foolox.game.core.engin.game.event.DiZhuBoard;
 import com.foolox.game.core.engin.game.event.GamePlayer;
-import com.foolox.game.core.engin.game.state.GameEventType;
+import com.foolox.game.core.engin.game.state.PlayerEvent;
 import com.foolox.game.core.engin.game.task.AbstractTask;
 import org.apache.commons.lang3.StringUtils;
 
@@ -114,17 +114,17 @@ public class CreateAutoTask extends AbstractTask implements FooloxGameTask {
             }
 
             if (isNormal) {    //真人
-                super.getGame(gameRoom.getPlaywayId()).change(gameRoom, GameEventType.AUTO.toString(), 17);    //通知状态机 , 此处应由状态机处理异步执行
+                super.getGame(gameRoom.getPlaywayId()).change(gameRoom, PlayerEvent.AUTO, 17);    //通知状态机 , 此处应由状态机处理异步执行
             } else {            //AI或托管
                 sendEvent(Command.CATCH_RESULT, new GameBoard(catchPlayer.getPlayuserId(), catchPlayer.isAccept(), catchPlayer.isAccept(), board.getRatio()), gameRoom);
-                super.getGame(gameRoom.getPlaywayId()).change(gameRoom, GameEventType.AUTO.toString(), 2);    //通知状态机 , 此处应由状态机处理异步执行
+                super.getGame(gameRoom.getPlaywayId()).change(gameRoom, PlayerEvent.AUTO, 2);    //通知状态机 , 此处应由状态机处理异步执行
                 board.setDocatch(true);    //变成抢地主
             }
             //更新board状态到缓存
             FooloxUtils.setBoardByRoomId(gameRoom.getId(), board);
         } else {
             //开始打牌，地主的人是最后一个抢了地主的人
-            super.getGame(gameRoom.getPlaywayId()).change(gameRoom, GameEventType.RAISEHANDS.toString());    //通知状态机 , 全部都抢过地主了 ， 把底牌发给 最后一个抢到地主的人
+            super.getGame(gameRoom.getPlaywayId()).change(gameRoom, PlayerEvent.RAISEHANDS);    //通知状态机 , 全部都抢过地主了 ， 把底牌发给 最后一个抢到地主的人
         }
     }
 

@@ -15,7 +15,7 @@ import com.foolox.game.constants.*;
 import com.foolox.game.core.FooloxDataContext;
 import com.foolox.game.core.engin.game.event.*;
 import com.foolox.game.core.engin.game.state.GameEvent;
-import com.foolox.game.core.engin.game.state.GameEventType;
+import com.foolox.game.core.engin.game.state.PlayerEvent;
 import com.foolox.game.core.logic.majiang.task.CreateMJRaiseHandsTask;
 import com.foolox.game.core.server.FooloxClient;
 import lombok.extern.slf4j.Slf4j;
@@ -93,9 +93,10 @@ public class GameEngine {
              */
             ActionTaskUtils.sendPlayers(fooloxClient, gameEvent.getGameRoom());
             /**
-             * 当前是在游戏中还是 未开始
+             * 当前是在游戏中还是未开始
              */
             Board board = FooloxUtils.getBoardByRoomId(gameEvent.getRoomid(), Board.class);
+            //不为空，表示游戏进行中
             if (board != null) {
                 GamePlayer currentPlayer = null;
                 for (GamePlayer gamePlayer : board.getGamePlayers()) {
@@ -105,6 +106,7 @@ public class GameEngine {
                     }
                 }
                 if (currentPlayer != null) {
+                    //本轮第一个出牌
                     boolean automic = false;
                     //（最后出牌不是空 并且 最后出牌玩家是自己） 或 （最后出牌是空 并且 庄家是自己）
                     if ((board.getLast() != null && board.getLast().getUserid().equals(currentPlayer.getPlayuserId())) || (board.getLast() == null && board.getBanker().equals(currentPlayer.getPlayuserId()))) {
@@ -136,15 +138,16 @@ public class GameEngine {
      */
     public GameEvent gameRequest(String userId, String playwayId, FooloxClient fooloxClient, ClientSession clientSession) {
         GameEvent gameEvent = null;
-        //通过userId取出roomID
+        //通过userId取出roomID，如果用户不在房间内，则为空
         String roomId = FooloxUtils.getRoomIdByUserId(userId);
-        //从系统配置中取出玩法
+        //通过传入的 playwayId 从系统配置中取出玩法
         GamePlayway gamePlayway = FooloxUtils.getGamePlaywayById(playwayId);
         boolean needtakequene = false;
+        //如果不为空，则进行后续操作；为空表示参数传递错误
         if (gamePlayway != null) {
             gameEvent = new GameEvent(gamePlayway.getMaxPlayerNum(), gamePlayway.getCardsNum());
             GameRoom gameRoom = null;
-            //已存在对应的房间----不用新建
+            //已存房内间----不用新建
             if (!StringUtils.isBlank(roomId) && FooloxUtils.getRoomById(roomId) != null) {
                 gameRoom = FooloxUtils.getRoomById(roomId);
             } else {
@@ -154,24 +157,24 @@ public class GameEngine {
                     gameRoom = this.createGameRoom(gamePlayway, userId, true, fooloxClient);
                 } else {
                     /**
-                     * 大厅游戏 ， 撮合游戏 , 发送异步消息，通知RingBuffer进行游戏撮合，撮合算法描述如下：
+                     * 大厅游戏,直接从预创建的队列中找不满员的房间
                      * 1、按照玩法查找
                      */
-                    gameRoom = poll(playwayId);
+                    gameRoom = FooloxUtils.pollRoomByPlaywayId(playwayId);
                     if (gameRoom != null) {
                         /**
                          * 修正获取gameroom获取的问题，因为删除房间的时候，为了不损失性能，没有将队列里的房间信息删除，如果有玩家获取到这个垃圾信息
                          * 则立即进行重新获取房间
                          */
                         while (FooloxUtils.getRoomById(roomId) == null) {
-                            gameRoom = poll(playwayId);
+                            gameRoom = FooloxUtils.pollRoomByPlaywayId(playwayId);
                             if (gameRoom == null) {
                                 break;
                             }
                         }
                     }
 
-                    if (gameRoom == null) {    //无房间 ， 需要
+                    if (gameRoom == null) {    //无房间 ， 需要新建一个房间
                         gameRoom = this.createGameRoom(gamePlayway, userId, false, fooloxClient);
                     } else {
                         clientSession.setPlayerindex(System.currentTimeMillis());//从后往前坐，房主进入以后优先坐在 首位
@@ -193,15 +196,15 @@ public class GameEngine {
                  */
                 List<ClientSession> haveInRoomPlayerList = FooloxUtils.getRoomClientSessionList(gameRoom.getId());
                 if (haveInRoomPlayerList.size() == 0) {
-                    gameEvent.setEventType(GameEventType.ENTER);
+                    gameEvent.setEventType(PlayerEvent.ENTER);
                 } else {
-                    gameEvent.setEventType(GameEventType.JOIN);
+                    gameEvent.setEventType(PlayerEvent.JOIN);
                 }
                 gameEvent.setGameRoom(gameRoom);
                 gameEvent.setRoomid(gameRoom.getId());
 
                 /**
-                 * 加入房间
+                 * 加入房间 :1. 更新缓存中的 clientSession 2.添加userId 与 roomId 的映射关系到缓存
                  */
                 this.joinRoom(gameRoom, clientSession, haveInRoomPlayerList);
 
@@ -312,7 +315,7 @@ public class GameEngine {
             clientSessionList.add(clientSession);
             //什么也没做
             FooloxClientContext.getFooloxClientCache().joinRoom(clientSession.getId(), gameRoom.getId());
-            //将用户加入到 room
+            //更新clientSession到缓存
             FooloxUtils.setClientSessionById(clientSession.getUserId(), clientSession);
         }
 
@@ -338,7 +341,7 @@ public class GameEngine {
             board = ActionTaskUtils.doCatch(board, player, accept);
 
             ActionTaskUtils.sendEvent(Command.CATCH_RESULT, new GameBoard(player.getPlayuserId(), player.isAccept(), board.isDocatch(), board.getRatio()), gameRoom);
-            GameUtils.getGame(gameRoom.getPlaywayId()).change(gameRoom, GameEventType.AUTO.toString(), 15);    //通知状态机 , 继续执行
+            GameUtils.getGame(gameRoom.getPlaywayId()).change(gameRoom, PlayerEvent.AUTO, 15);    //通知状态机 , 继续执行
             //更新board 信息到缓存
             FooloxUtils.setBoardByRoomId(gameRoom.getId(), board);
             //1秒后开始执行任务
@@ -461,7 +464,7 @@ public class GameEngine {
                      * 重置计时器，立即执行
                      */
                     FooloxGameTaskUtil.getExpireCache().put(gameRoom.getId(), new CreateMJRaiseHandsTask(1, gameRoom, gameRoom.getOrgi()));
-                    GameUtils.getGame(gameRoom.getPlaywayId()).change(gameRoom, GameEventType.RAISEHANDS.toString(), 0);
+                    GameUtils.getGame(gameRoom.getPlaywayId()).change(gameRoom, PlayerEvent.RAISEHANDS, 0);
                 }
             }
         }
@@ -570,7 +573,7 @@ public class GameEngine {
                      * 不同的胡牌方式，处理流程不同，推倒胡，直接进入结束牌局 ， 血战：当前玩家结束牌局，血流：继续进行，下一个玩家
                      */
                     if (gamePlayway.getWintype().equals(MJWinType.TUI.toString())) {        //推倒胡
-                        GameUtils.getGame(gameRoom.getPlaywayId()).change(gameRoom, GameEventType.ALLCARDS.toString(), 0);    //打完牌了,通知结算
+                        GameUtils.getGame(gameRoom.getPlaywayId()).change(gameRoom, PlayerEvent.ALLCARDS, 0);    //打完牌了,通知结算
                     } else { //血战到底
                         if (gamePlayway.getWintype().equals(MJWinType.END.toString())) {        //标记当前玩家的状态 是 已结束
                             player.setEnd(true);
@@ -669,27 +672,6 @@ public class GameEngine {
             clientSession.setRoomready(true);
             FooloxUtils.addRoomClientSession(roomId, clientSession);
         }
-    }
-
-
-    /**
-     * 根据玩法，取出空闲房间
-     *
-     * @return
-     */
-    private GameRoom poll(String playwayId) {
-        GameRoom gameRoom = null;
-        Map<String, GameRoom> map = redisService.hgetAll(GamePrefix.ROOM_PLAYWAY_GAMEROOM_LIST, playwayId, GameRoom.class);
-        for (String s : map.keySet()) {
-            GameRoom room = map.get(s);
-            redisService.hdel(GamePrefix.ROOM_PLAYWAY_GAMEROOM_LIST, playwayId, room.getId());
-            List<ClientSession> clientSessions = FooloxUtils.getRoomClientSessionList(room.getId());
-            if (clientSessions.size() < room.getMaxPlayerNum()) {
-                gameRoom = room;
-                break;
-            }
-        }
-        return gameRoom;
     }
 
     /**

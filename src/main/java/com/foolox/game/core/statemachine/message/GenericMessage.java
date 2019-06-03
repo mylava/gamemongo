@@ -1,5 +1,7 @@
 package com.foolox.game.core.statemachine.message;
 
+import com.foolox.game.core.engin.game.state.PlayerEvent;
+
 import java.util.Map;
 
 /**
@@ -8,16 +10,16 @@ import java.util.Map;
  * @author: lipengfei
  * @date: 30/05/2019
  */
-public class GenericMessage<T> implements Message<T> {
-    private final T payload;
+public class GenericMessage implements Message {
+    private final PlayerEvent payload;
 
     private final MessageHeaders headers;
 
-    public GenericMessage(T payload, Map<String, Object> headers) {
+    public GenericMessage(PlayerEvent payload, Map<String, Object> headers) {
         this(payload, new MessageHeaders(headers));
     }
 
-    public GenericMessage(T payload, MessageHeaders headers) {
+    public GenericMessage(PlayerEvent payload, MessageHeaders headers) {
         this.payload = payload;
         this.headers = headers;
     }
@@ -27,7 +29,7 @@ public class GenericMessage<T> implements Message<T> {
         return headers;
     }
     @Override
-    public T getPayload() {
+    public PlayerEvent getPayload() {
         return payload;
     }
 }

@@ -7,9 +7,9 @@ package com.foolox.game.constants;
  * @date: 19/05/2019
  */
 public enum PlayerGameStatus {
-    //准备
-    READY,
-    NOTREADY,		//未准备
+    //玩家状态
+    READY,          //就绪 （尚未开始游戏）
+    NOTREADY,		//未就绪（不能游戏）
     MANAGED,        //托管
     PLAYING,        //游戏中(包含结算中？)
     SETTLEMENT,     //结算中

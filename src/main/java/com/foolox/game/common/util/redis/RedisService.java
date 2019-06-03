@@ -476,7 +476,6 @@ public class RedisService {
         Jedis jedis = null;
         try {
             jedis = jedisPool.getResource();
-
             List<T> result = new ArrayList<>();
             List<String> lrange = jedis.lrange(prefix.getPrefix() + key, start, end);
             for (String s : lrange) {

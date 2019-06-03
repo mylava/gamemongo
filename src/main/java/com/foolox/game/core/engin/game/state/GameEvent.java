@@ -18,7 +18,7 @@ public class GameEvent {
     //房间ID
     public String roomid;
     //事件
-    private GameEventType eventType;
+    private PlayerEvent eventType;
     private String orgi;
     //游戏房间对象
     private GameRoom gameRoom;

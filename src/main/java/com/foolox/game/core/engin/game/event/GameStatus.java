@@ -14,13 +14,13 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 public class GameStatus implements Message {
-
-    private Command command ;
-    private String gamestatus ;
-    private String userid ;
-    private String orgi ;
-    private String gametype ;
-    private String playway ;
-    private boolean cardroom ;
-    private String event ;
+    //暂时无用
+    private Command command;
+    private String gamestatus;
+    private String userid;
+    private String orgi;
+    private String gametype;
+    private String playway;
+    private boolean cardroom;
+    private String event;
 }

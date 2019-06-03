@@ -1,13 +1,13 @@
 package com.foolox.game.config;
 
 import com.foolox.game.constants.RoomStatus;
-import com.foolox.game.core.engin.game.state.GameEventType;
+import com.foolox.game.core.engin.game.state.PlayerEvent;
 import com.foolox.game.core.logic.*;
 import com.foolox.game.core.logic.dizhu.action.AutoAction;
 import com.foolox.game.core.logic.dizhu.action.RaiseHandsAction;
-import com.foolox.game.core.statemachine.FooloxStateMachine;
+import com.foolox.game.core.statemachine.StateMachine;
 import com.foolox.game.core.statemachine.config.State;
-import com.foolox.game.core.statemachine.config.StateMachineTransitionConfigurer;
+import com.foolox.game.core.statemachine.config.Transition;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -18,61 +18,53 @@ import org.springframework.context.annotation.Configuration;
  * @date: 30/05/2019
  */
 @Configuration
-public class DizhuStateMachineConfig<T, S> {
-    @Bean("dizhu")
-    public FooloxStateMachine<String, String> create() throws Exception {
-        FooloxStateMachine<String, String> fooloxStateMachine = new FooloxStateMachine<String, String>();
-        this.configure(fooloxStateMachine.getConfig());
-        this.configure(fooloxStateMachine.getTransitions());
-        return fooloxStateMachine;
+public class DizhuStateMachineConfig {
+    @Bean("dizhuStateMachine")
+    public StateMachine create() throws Exception {
+        StateMachine stateMachine = new StateMachine();
+        this.stateConfig(stateMachine.getStateContext());
+        this.configure(stateMachine);
+        return stateMachine;
     }
 
-    public void configure(State<String, String> states)
-            throws Exception {
-        states
-                .initial(RoomStatus.NONE.toString())
-                .addState(RoomStatus.CRERATED.toString())
-                .addState(RoomStatus.WAITTING.toString())
-                .addState(RoomStatus.READY.toString())
-                .addState(RoomStatus.BEGIN.toString())
-                .addState(RoomStatus.PLAY.toString())
-                .addState(RoomStatus.END.toString());
+    public void stateConfig(State state) {
+        state
+                .firstState(RoomStatus.NONE)
+                .nextState(RoomStatus.CRERATED)
+                .nextState(RoomStatus.WAITTING)
+                .nextState(RoomStatus.READY)
+                .nextState(RoomStatus.BEGIN)
+                .nextState(RoomStatus.PLAY)
+                .nextState(RoomStatus.END);
     }
 
-    public void configure(StateMachineTransitionConfigurer<String, String> transitions)
+    public void configure(StateMachine stateMachine)
             throws Exception {
         /**
          * 状态切换：BEGIN->WAITTING->READY->PLAY->END
          */
-        transitions
-                .withExternal()
-                .source(RoomStatus.NONE.toString()).target(RoomStatus.CRERATED.toString())
-                .event(GameEventType.ENTER.toString()).action(new EnterAction<String, String>())
-                .and()
-                .withExternal()
-                .source(RoomStatus.CRERATED.toString()).target(RoomStatus.WAITTING.toString())
-                .event(GameEventType.JOIN.toString()).action(new JoinAction<String, String>())
-                .and()
-                .withExternal()
-                .source(RoomStatus.WAITTING.toString()).target(RoomStatus.READY.toString())
-                .event(GameEventType.ENOUGH.toString()).action(new EnoughAction<String, String>())
-                .and()
-                .withExternal()
-                .source(RoomStatus.READY.toString()).target(RoomStatus.BEGIN.toString())
-                .event(GameEventType.AUTO.toString()).action(new AutoAction<String, String>())    //抢地主
-                .and()
-                .withExternal()
-                .source(RoomStatus.BEGIN.toString()).target(RoomStatus.LASTHANDS.toString())
-                .event(GameEventType.RAISEHANDS.toString()).action(new RaiseHandsAction<String, String>())
-                .and()
-                .withExternal()
-                .source(RoomStatus.LASTHANDS.toString()).target(RoomStatus.PLAY.toString())
-                .event(GameEventType.PLAYCARDS.toString()).action(new PlayCardsAction<String, String>())
-                .and()
-                .withExternal()
-                .source(RoomStatus.PLAY.toString()).target(RoomStatus.END.toString())
-                .event(GameEventType.ALLCARDS.toString()).action(new AllCardsAction<String, String>())
-                .and()
+        stateMachine
+                .addTransition(new Transition()
+                        .source(RoomStatus.NONE).target(RoomStatus.CRERATED)
+                        .event(PlayerEvent.ENTER).action(new EnterAction()))
+                .addTransition(new Transition()
+                        .source(RoomStatus.CRERATED).target(RoomStatus.WAITTING)
+                        .event(PlayerEvent.JOIN).action(new JoinAction()))
+                .addTransition(new Transition()
+                        .source(RoomStatus.WAITTING).target(RoomStatus.READY)
+                        .event(PlayerEvent.ENOUGH).action(new EnoughAction()))
+                .addTransition(new Transition()
+                        .source(RoomStatus.READY).target(RoomStatus.BEGIN)
+                        .event(PlayerEvent.AUTO).action(new AutoAction()))
+                .addTransition(new Transition()
+                        .source(RoomStatus.BEGIN).target(RoomStatus.LASTHANDS)
+                        .event(PlayerEvent.RAISEHANDS).action(new RaiseHandsAction()))
+                .addTransition(new Transition()
+                        .source(RoomStatus.LASTHANDS).target(RoomStatus.PLAY)
+                        .event(PlayerEvent.PLAYCARDS).action(new PlayCardsAction()))
+                .addTransition(new Transition()
+                        .source(RoomStatus.PLAY).target(RoomStatus.END)
+                        .event(PlayerEvent.ALLCARDS).action(new AllCardsAction()))
         ;
     }
 }

@@ -25,6 +25,8 @@ public class SystemPrefix extends BasePrefix{
 
     // gameId -- sysdic
     public static final SystemPrefix CONFIG_ID_SYSDIC = new SystemPrefix("config:sysdic");
-    
+    // aiconfig
+    public static final SystemPrefix CONFIG_AI = new SystemPrefix("config:ai");
+
     
 }

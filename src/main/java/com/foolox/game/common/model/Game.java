@@ -2,8 +2,9 @@ package com.foolox.game.common.model;
 
 import com.foolox.game.common.repo.domain.GameRoom;
 import com.foolox.game.core.engin.game.state.GameEvent;
-import com.foolox.game.core.statemachine.impl.FooloxMachineHandler;
-import com.foolox.game.core.statemachine.impl.MessageBuilder;
+import com.foolox.game.core.engin.game.state.PlayerEvent;
+import com.foolox.game.core.statemachine.handler.StateMachineHandler;
+import com.foolox.game.core.statemachine.message.MessageBuilder;
 
 /**
  * comment: 游戏状态
@@ -12,19 +13,19 @@ import com.foolox.game.core.statemachine.impl.MessageBuilder;
  * @date: 29/05/2019
  */
 public class Game {
-    private final FooloxMachineHandler handler;
+    private final StateMachineHandler handler;
 
-    public Game(FooloxMachineHandler handler) {
+    public Game(StateMachineHandler handler) {
         this.handler = handler;
     }
 
-    public void change(GameRoom gameRoom, String event) {
+    public void change(GameRoom gameRoom, PlayerEvent event) {
         change(gameRoom, event, 0);
     }
 
-    public void change(GameRoom gameRoom, String event, int interval) {
+    public void change(GameRoom gameRoom, PlayerEvent event, int interval) {
         handler.handleEventWithState(MessageBuilder.withPayload(event)
-                .setHeader("room", gameRoom.getId()).setHeader("interval", interval).build(), event);
+                .setHeader("roomId", gameRoom.getId()).setHeader("interval", interval).build(), event);
     }
 
     public void change(GameEvent gameEvent) {
@@ -32,8 +33,11 @@ public class Game {
     }
 
     public void change(GameEvent gameEvent, int interval) {
-        handler.handleEventWithState(MessageBuilder.withPayload(gameEvent.getEventType().toString())
-                        .setHeader("room", gameEvent.getRoomid()).setHeader("interval", interval).build(),
-                gameEvent.getEventType().toString());
+        handler.handleEventWithState(MessageBuilder.
+                        withPayload(gameEvent.getEventType())
+                        .setHeader("roomId", gameEvent.getRoomid())
+                        .setHeader("interval", interval)
+                        .build(),
+                gameEvent.getEventType());
     }
 }

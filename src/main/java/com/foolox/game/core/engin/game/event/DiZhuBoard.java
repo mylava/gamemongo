@@ -8,18 +8,15 @@ import com.foolox.game.common.repo.domain.GameRoom;
 import com.foolox.game.common.util.FooloxGameTaskUtil;
 import com.foolox.game.common.util.FooloxUtils;
 import com.foolox.game.common.util.GameUtils;
-import com.foolox.game.common.util.redis.GamePrefix;
-import com.foolox.game.common.util.redis.RedisService;
 import com.foolox.game.constants.Command;
 import com.foolox.game.constants.PVAConsumeActionEnum;
 import com.foolox.game.constants.PVAInComeActionEnum;
 import com.foolox.game.constants.PlayerStatus;
-import com.foolox.game.core.FooloxDataContext;
 import com.foolox.game.core.engin.game.ActionTaskUtils;
 import com.foolox.game.core.engin.game.CardType;
 import com.foolox.game.core.engin.game.pva.PVAOperatorResult;
 import com.foolox.game.core.engin.game.pva.PvaTools;
-import com.foolox.game.core.engin.game.state.GameEventType;
+import com.foolox.game.core.engin.game.state.PlayerEvent;
 import com.foolox.game.core.logic.dizhu.CardsTypeEnum;
 import org.apache.commons.lang3.ArrayUtils;
 
@@ -302,15 +299,15 @@ public class DiZhuBoard extends Board {
              * 牌出完了就算赢了
              */
             if (board.isWin()) {//出完了
-                GameUtils.getGame(gameRoom.getPlaywayId()).change(gameRoom, GameEventType.ALLCARDS.toString(), 0);    //赢了，通知结算
+                GameUtils.getGame(gameRoom.getPlaywayId()).change(gameRoom, PlayerEvent.ALLCARDS, 0);    //赢了，通知结算
                 takeCards.setNextplayer(null);
             } else {
                 ClientSession nextClientSession = ActionTaskUtils.getClientSession(gameRoom.getId(), takeCards.getNextplayer());
                 if (nextClientSession != null) {
                     if (PlayerStatus.NORMAL==nextClientSession.getPlayerStatus()) {
-                        GameUtils.getGame(gameRoom.getPlaywayId()).change(gameRoom, GameEventType.PLAYCARDS.toString(), 25);    //应该从 游戏后台配置参数中获取
+                        GameUtils.getGame(gameRoom.getPlaywayId()).change(gameRoom, PlayerEvent.PLAYCARDS, 25);    //应该从 游戏后台配置参数中获取
                     } else {
-                        GameUtils.getGame(gameRoom.getPlaywayId()).change(gameRoom, GameEventType.PLAYCARDS.toString(), 3);    //应该从游戏后台配置参数中获取
+                        GameUtils.getGame(gameRoom.getPlaywayId()).change(gameRoom, PlayerEvent.PLAYCARDS, 3);    //应该从游戏后台配置参数中获取
                     }
                 }
             }

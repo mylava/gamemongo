@@ -1,6 +1,7 @@
 package com.foolox.game.common.repo.domain;
 
 import com.foolox.game.common.util.event.UserEvent;
+import com.foolox.game.constants.PlayerStatus;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -13,7 +14,7 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Document(collection = "clientSessionList")
+@Document(collection = "player")
 public class Player implements UserEvent {
     @Id
     private String id;
@@ -57,4 +58,6 @@ public class Player implements UserEvent {
     private Integer disabled;
 
     private long coins;      //金币
+
+    private PlayerStatus playerStatus;
 }

@@ -1,20 +1,21 @@
 package com.foolox.game.common.util;
 
 import com.foolox.game.common.model.Game;
-import com.foolox.game.common.repo.domain.GamePlayway;
-import com.foolox.game.common.repo.domain.GameRoom;
-import com.foolox.game.common.repo.domain.SysDic;
+import com.foolox.game.common.repo.domain.*;
 import com.foolox.game.common.util.redis.RedisService;
 import com.foolox.game.common.util.redis.SystemPrefix;
 import com.foolox.game.constants.PlayerGameStatus;
 import com.foolox.game.constants.PlayerStatus;
 import com.foolox.game.core.FooloxDataContext;
-import com.foolox.game.common.repo.domain.ClientSession;
 import com.foolox.game.core.engin.game.Message;
-import com.foolox.game.core.engin.game.pva.PVAOperatorResult;
 import com.foolox.game.core.server.FooloxClient;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.BeanUtils;
+import sun.misc.BASE64Encoder;
 
+import javax.servlet.http.HttpServletRequest;
+import java.lang.reflect.InvocationTargetException;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -41,18 +42,21 @@ public class GameUtils {
      * @param clientSession
      */
     public static void syncNotPlaying(ClientSession clientSession) {
+        //玩家不在游戏中[可能要根据游戏决定是否删除房间]
         if (clientSession != null && PlayerGameStatus.PLAYING != clientSession.getPlayerGameStatus()) {
-            //取出已经在房间的 ClientSession
+            //拿到 ClientSession
             clientSession = FooloxUtils.getClientSessionById(clientSession.getUserId());
-            //删除已在房间的 ClientSession
-            FooloxUtils.delClientSessionById(clientSession.getUserId());
-            //删除 userId 与 RoomId 的关联关系
-            FooloxUtils.delRoomIdByUserId(clientSession.getUserId());
+            if (!StringUtils.isBlank(clientSession.getRoomId())) {
+                //删除 userId 与 RoomId 的关联关系
+                FooloxUtils.delRoomIdByUserId(clientSession.getUserId());
+                //从 roomId-ClientSessionList 中删除 ClientSession
+                FooloxUtils.removeOneFromRoomClientSession(clientSession.getRoomId(), clientSession.getUserId());
+            }
 
             /**
              * 检查，如果房间没 真人玩家了或者当前玩家是房主 ，就可以解散房间了
              */
-            if (clientSession != null && !StringUtils.isBlank(clientSession.getRoomId())) {
+            if (null != clientSession && !StringUtils.isBlank(clientSession.getRoomId())) {
                 //取出GameRoom
                 GameRoom gameRoom = FooloxUtils.getRoomById(clientSession.getRoomId());
                 //是自己创建的房间，则解散
@@ -60,7 +64,7 @@ public class GameUtils {
                     /**
                      * 解散房间，应该需要一个专门的 方法来处理，别直接删缓存了，这样不好！！！
                      */
-//                    FooloxDataContext.getGameEngine().dismissRoom(gameRoom, clientSession.getUserId());
+                    FooloxDataContext.getGameEngine().dismissRoom(gameRoom, clientSession.getUserId());
                 }
             }
         }
@@ -130,6 +134,52 @@ public class GameUtils {
         //暂不实现
         return null;
     }
+
+    /**
+     * 创建一个AI玩家
+     *
+     * @param player
+     * @return
+     * @throws InvocationTargetException
+     * @throws IllegalAccessException
+     */
+    public static ClientSession createAI(Player player, String playwayId, PlayerStatus playertype) {
+        ClientSession clientSession = null;
+        if (player != null) {
+            if (StringUtils.isBlank(player.getUsername())) {
+                player.setUsername("Guest_" + new BASE64Encoder().encode(FooloxUtils.getUUID().toLowerCase().getBytes()));
+            }
+            if (!StringUtils.isBlank(player.getPassword())) {
+                player.setPassword(FooloxUtils.md5(player.getPassword()));
+            } else {
+                player.setPassword(FooloxUtils.md5(FooloxUtils.getRandomNumberChar(6)));//随机生成一个6位数的密码 ，备用
+            }
+            player.setPlayerStatus(playertype);    //玩家类型
+            player.setCreateTime(new Date());
+            player.setUpdateTime(new Date());
+            player.setLastLoginTime(new Date());
+
+            AiConfig aiConfig = FooloxUtils.getAiConfigByPlaywayId(playwayId);
+
+            if (PlayerStatus.AI==playertype && aiConfig != null) {
+                player.setCoins(aiConfig.getInitcoins());
+            } else {
+//                AccountConfig config = CacheConfigTools.getGameAccountConfig(BMDataContext.SYSTEM_ORGI);
+//                if (config != null) {
+//                    player.setGoldcoins(config.getInitcoins());
+//                    player.setCards(config.getInitcards());
+//                    player.setDiamonds(config.getInitdiamonds());
+//                }
+            }
+
+            if (!StringUtils.isBlank(player.getId())) {
+                clientSession = new ClientSession();
+                BeanUtils.copyProperties(clientSession, player);
+            }
+        }
+        return clientSession;
+    }
+
 
     /**
      * --------------- ---------------

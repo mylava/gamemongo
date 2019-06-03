@@ -11,7 +11,7 @@ import com.foolox.game.constants.PlayerStatus;
 import com.foolox.game.constants.RoomStatus;
 import com.foolox.game.core.FooloxDataContext;
 import com.foolox.game.core.engin.game.event.*;
-import com.foolox.game.core.engin.game.state.GameEventType;
+import com.foolox.game.core.engin.game.state.PlayerEvent;
 import com.foolox.game.core.engin.game.task.AbstractTask;
 import com.foolox.game.core.logic.dizhu.CardsTypeEnum;
 import com.foolox.game.core.logic.dizhu.task.CreateAutoTask;
@@ -76,6 +76,20 @@ public class ActionTaskUtils {
     }
 
     /**
+     *
+     * @param gameRoom
+     * @param clientSessionList
+     */
+    public static void sendPlayersExclusiveAI( List<ClientSession> clientSessionList, GameRoom gameRoom){
+        for(ClientSession user : clientSessionList){
+            FooloxClient client = FooloxClientContext.getFooloxClientCache().getClient(user.getId()) ;
+            if(client!=null && ifOnline(client.getUserId())){
+                client.sendEvent(FooloxDataContext.FOOLOX_MESSAGE_EVENT, new RoomPlayers(gameRoom.getMaxPlayerNum(), FooloxUtils.getRoomClientSessionList(gameRoom.getId()), Command.GET_ROOM_PLAYERS));
+            }
+        }
+    }
+
+    /**
      * 检查玩家是否在线
      *
      * @param userId
@@ -123,7 +137,7 @@ public class ActionTaskUtils {
          * 所有人都已经举手
          */
         if (enough) {
-            game.change(gameRoom, GameEventType.ENOUGH.toString());    //通知状态机 , 此处应由状态机处理异步执行
+            game.change(gameRoom, PlayerEvent.ENOUGH);    //通知状态机 , 此处应由状态机处理异步执行
         }
     }
 
