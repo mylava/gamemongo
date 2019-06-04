@@ -36,7 +36,11 @@ public enum Command {
     //玩家已经准备好
     PLAYER_READY,
     //聊天
-    MESSAGE;
+    MESSAGE,
+    //新的庄家
+    BANKER,
+    //打完所有牌，结算
+    ALLCARDS;
 
     @Override
     public String toString() {

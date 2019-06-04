@@ -16,7 +16,7 @@ import com.foolox.game.core.FooloxDataContext;
 import com.foolox.game.core.engin.game.event.*;
 import com.foolox.game.core.engin.game.state.GameEvent;
 import com.foolox.game.core.engin.game.state.PlayerEvent;
-import com.foolox.game.core.logic.majiang.task.CreateMJRaiseHandsTask;
+import com.foolox.game.core.logic.task.majiang.CreateMJRaiseHandsTask;
 import com.foolox.game.core.server.FooloxClient;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -28,7 +28,6 @@ import javax.annotation.Resource;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
-import java.util.Map;
 
 /**
  * comment:
@@ -59,7 +58,7 @@ public class GameEngine {
                 *//**
              * 解散房间的时候，只清理 AI
              *//*
-                if (clientSessionList.getPlayerStatus().equals(DataContext.PlayerTypeEnum.AI.toString())) {
+                if (clientSessionList.getPlayerType().equals(DataContext.PlayerTypeEnum.AI.toString())) {
                     CacheHelper.getGamePlayerCacheBean().delete(clientSessionList.getId(), orgi);
                     CacheHelper.getRoomMappingCacheBean().delete(clientSessionList.getId(), orgi);
                 }
@@ -127,9 +126,10 @@ public class GameEngine {
 
     /**
      * 请求开始游戏
-     *
+     * <p>
      * 玩家房间选择， 新请求，游戏撮合， 如果当前玩家是断线重连， 或者是 退出后进入的，则第一步检查是否已在房间
      * 如果已在房间，直接返回
+     *
      * @param userId
      * @param playwayId
      * @param fooloxClient
@@ -160,14 +160,14 @@ public class GameEngine {
                      * 大厅游戏,直接从预创建的队列中找不满员的房间
                      * 1、按照玩法查找
                      */
-                    gameRoom = FooloxUtils.pollRoomByPlaywayId(playwayId);
+                    gameRoom = FooloxUtils.pollRoomFromQueue(playwayId);
                     if (gameRoom != null) {
                         /**
                          * 修正获取gameroom获取的问题，因为删除房间的时候，为了不损失性能，没有将队列里的房间信息删除，如果有玩家获取到这个垃圾信息
                          * 则立即进行重新获取房间
                          */
                         while (FooloxUtils.getRoomById(roomId) == null) {
-                            gameRoom = FooloxUtils.pollRoomByPlaywayId(playwayId);
+                            gameRoom = FooloxUtils.pollRoomFromQueue(playwayId);
                             if (gameRoom == null) {
                                 break;
                             }
@@ -219,7 +219,7 @@ public class GameEngine {
                  */
                 if (haveInRoomPlayerList.size() < gamePlayway.getMaxPlayerNum() && needtakequene) {
                     //未达到最大玩家数量，加入到游戏撮合 队列，继续撮合
-                    redisService.hset(GamePrefix.ROOM_PLAYWAY_GAMEROOM_LIST, playwayId, roomId, gameRoom);
+                    FooloxUtils.addRoom2Queue(playwayId, gameRoom);
                 }
             }
         }
@@ -283,7 +283,7 @@ public class GameEngine {
         }
 
         //未达到最大玩家数量，加入到游戏撮合 队列，继续撮合
-        redisService.hset(GamePrefix.ROOM_PLAYWAY_GAMEROOM_LIST, playway.getId(), gameRoom.getId(), gameRoom);
+        FooloxUtils.addRoom2Queue(playway.getId(), gameRoom);
         //保存到数据库
         FooloxUtils.published(gameRoom, FooloxDataContext.getApplicationContext().getBean(GameRoomRepository.class));
 
@@ -309,7 +309,7 @@ public class GameEngine {
         if (!inroom) {
             clientSession.setPlayerindex(System.currentTimeMillis());
             clientSession.setPlayerGameStatus(PlayerGameStatus.READY);
-            clientSession.setPlayerStatus(PlayerStatus.NORMAL);
+            clientSession.setPlayerType(PlayerType.NORMAL);
             clientSession.setRoomId(gameRoom.getId());
             clientSession.setRoomready(false);
             clientSessionList.add(clientSession);
@@ -671,6 +671,21 @@ public class GameEngine {
              */
             clientSession.setRoomready(true);
             FooloxUtils.addRoomClientSession(roomId, clientSession);
+        }
+    }
+
+    /**
+     * 结束 当前牌局
+     *
+     * @param roomid
+     * @return
+     */
+    public void finished(String roomid) {
+        if (!StringUtils.isBlank(roomid)) {
+            //从任务缓存中 清除 room相关的task
+            FooloxGameTaskUtil.getExpireCache().remove(roomid);
+            //删除room 相关的 board 信息
+            FooloxUtils.delBoardByRoomId(roomid);
         }
     }
 

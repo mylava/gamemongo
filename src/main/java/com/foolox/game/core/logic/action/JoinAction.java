@@ -1,4 +1,4 @@
-package com.foolox.game.core.logic.majiang.action;
+package com.foolox.game.core.logic.action;
 
 import com.foolox.game.core.statemachine.action.Action;
 import com.foolox.game.core.statemachine.config.Transition;
@@ -10,8 +10,7 @@ import com.foolox.game.core.statemachine.message.Message;
  * @author: lipengfei
  * @date: 30/05/2019
  */
-public class PlayMJCardsAction implements Action {
-
+public class JoinAction implements Action {
     @Override
     public void execute(Message message, Transition transition) {
 

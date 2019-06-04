@@ -6,7 +6,7 @@ import com.foolox.game.common.repo.domain.SystemDict;
 import com.foolox.game.common.service.PlayerService;
 import com.foolox.game.common.service.SystemDictService;
 import com.foolox.game.constants.DictType;
-import com.foolox.game.constants.PlayerStatus;
+import com.foolox.game.constants.PlayerType;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,7 +43,7 @@ public class LoginMongoTest {
         Player p = playerService.save(new Player("1","lpf","123456","xx@email.com","男","杀破狼",
                 "玩家","13888888888","headimg",1,1000l,
                 "个性签名","000001",new Date(),new Date(),new Date(),"memo",new Date(),"openid",0,1000,
-                PlayerStatus.NORMAL));
+                PlayerType.NORMAL));
 
 //        System.out.println("save p="+p);
 ////        GamePlayer one = loginService.findPlayerById(p.getId());

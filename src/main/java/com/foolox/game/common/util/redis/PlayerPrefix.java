@@ -23,7 +23,9 @@ public class PlayerPrefix extends BasePrefix{
     //getGamePlayerCacheBean:
     //进入房间的用户与ClientSession对应关系  key(userId -- clientSession)
     //getApiUserCacheBean 保存 userId 与 clientsession 的映射关系
-    public static final PlayerPrefix PLAYER_ID_CLIENTSESSION = new PlayerPrefix("getGamePlayer:userId:clientsession");
+    public static final PlayerPrefix PLAYER_ID_CLIENTSESSION = new PlayerPrefix("player:userid:clientsession");
     public static final PlayerPrefix PLAYER_ROOM = new PlayerPrefix("clientSessionList:room");
-    public static final PlayerPrefix PLAYER_CLIENTSESSIONID_PLAYER = new PlayerPrefix("getGamePlayer:clientsessionid:getGamePlayer");
+    public static final PlayerPrefix PLAYER_CLIENTSESSIONID_PLAYER = new PlayerPrefix("player:clientsessionid:gameplayer");
+    //getApiUserCacheBean
+    public static final PlayerPrefix PLAYER_LOGIN_CLIENTSESSION = new PlayerPrefix("player:login:clientsession");
 }

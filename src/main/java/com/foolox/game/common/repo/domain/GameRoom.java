@@ -34,7 +34,7 @@ public class GameRoom implements UserEvent {
     private int matchscreen;//比赛场次
     private String matchtype;    //比赛类型
 
-    private String lastwinner;    //最后赢的人 ， 可多人 ， 逗号隔开
+    private String lastwinner;    //最后赢的人Id ， 可多人 ， 逗号隔开
 
 
     private Date createtime;

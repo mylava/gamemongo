@@ -1,10 +1,10 @@
-package com.foolox.game.core.logic;
+package com.foolox.game.core.logic.action;
 
 import com.foolox.game.common.repo.domain.AiConfig;
 import com.foolox.game.common.repo.domain.GameRoom;
 import com.foolox.game.common.util.FooloxGameTaskUtil;
 import com.foolox.game.common.util.FooloxUtils;
-import com.foolox.game.core.logic.dizhu.task.CreateAITask;
+import com.foolox.game.core.logic.task.CreateAITask;
 import com.foolox.game.core.statemachine.action.Action;
 import com.foolox.game.core.statemachine.config.Transition;
 import com.foolox.game.core.statemachine.message.Message;
@@ -30,7 +30,7 @@ public class EnterAction implements Action {
                 if (!gameRoom.isCardroom()) {
                     AiConfig aiConfig = FooloxUtils.getAiConfigByPlaywayId(gameRoom.getParentid());
                     if (aiConfig.isEnableai()) {
-                        FooloxGameTaskUtil.getExpireCache().put(gameRoom.getOrgi(), new CreateAITask(aiConfig.getWaittime(), gameRoom));
+                        FooloxGameTaskUtil.getExpireCache().put(gameRoom.getId(), new CreateAITask(aiConfig.getWaittime(), gameRoom));
                     }
                 }
                 /**

@@ -1,4 +1,4 @@
-package com.foolox.game.core.logic.dizhu;
+package com.foolox.game.core.logic;
 
 /**
  * comment:

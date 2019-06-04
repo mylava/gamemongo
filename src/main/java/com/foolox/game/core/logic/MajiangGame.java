@@ -1,4 +1,4 @@
-package com.foolox.game.core.logic.dizhu;
+package com.foolox.game.core.logic;
 
 import com.foolox.game.common.repo.domain.ClientSession;
 import com.foolox.game.common.repo.domain.GamePlayway;
@@ -14,7 +14,7 @@ import java.util.List;
  * @author: lipengfei
  * @date: 30/05/2019
  */
-public class DizhuGame implements FooloxGame {
+public class MajiangGame implements FooloxGame {
     @Override
     public Board process(List<ClientSession> clientSessions, GameRoom gameRoom, GamePlayway playway, String banker, int cardsnum) {
         return null;

@@ -4,17 +4,18 @@ import com.foolox.game.common.model.Game;
 import com.foolox.game.common.repo.domain.ClientSession;
 import com.foolox.game.common.repo.domain.GameRoom;
 import com.foolox.game.common.util.FooloxUtils;
+import com.foolox.game.common.util.GameUtils;
 import com.foolox.game.common.util.client.FooloxClientContext;
 import com.foolox.game.common.util.redis.RedisService;
 import com.foolox.game.constants.Command;
-import com.foolox.game.constants.PlayerStatus;
+import com.foolox.game.constants.PlayerType;
 import com.foolox.game.constants.RoomStatus;
 import com.foolox.game.core.FooloxDataContext;
 import com.foolox.game.core.engin.game.event.*;
 import com.foolox.game.core.engin.game.state.PlayerEvent;
 import com.foolox.game.core.engin.game.task.AbstractTask;
-import com.foolox.game.core.logic.dizhu.CardsTypeEnum;
-import com.foolox.game.core.logic.dizhu.task.CreateAutoTask;
+import com.foolox.game.core.logic.CardsTypeEnum;
+import com.foolox.game.core.logic.task.dizhu.CreateAutoTask;
 import com.foolox.game.core.server.FooloxClient;
 
 import java.util.HashMap;
@@ -52,6 +53,7 @@ public class ActionTaskUtils {
 
     /**
      * 发送消息给 玩家
+     *
      * @param userId
      * @param message
      */
@@ -76,14 +78,13 @@ public class ActionTaskUtils {
     }
 
     /**
-     *
      * @param gameRoom
      * @param clientSessionList
      */
-    public static void sendPlayersExclusiveAI( List<ClientSession> clientSessionList, GameRoom gameRoom){
-        for(ClientSession user : clientSessionList){
-            FooloxClient client = FooloxClientContext.getFooloxClientCache().getClient(user.getId()) ;
-            if(client!=null && ifOnline(client.getUserId())){
+    public static void sendPlayersExclusiveAI(List<ClientSession> clientSessionList, GameRoom gameRoom) {
+        for (ClientSession user : clientSessionList) {
+            FooloxClient client = FooloxClientContext.getFooloxClientCache().getClient(user.getId());
+            if (client != null && ifOnline(client.getUserId())) {
                 client.sendEvent(FooloxDataContext.FOOLOX_MESSAGE_EVENT, new RoomPlayers(gameRoom.getMaxPlayerNum(), FooloxUtils.getRoomClientSessionList(gameRoom.getId()), Command.GET_ROOM_PLAYERS));
             }
         }
@@ -97,7 +98,7 @@ public class ActionTaskUtils {
      */
     public static boolean ifOnline(String userId) {
         ClientSession clientSession = FooloxUtils.getClientSessionById(userId);
-        return clientSession != null && PlayerStatus.OFFLINE != clientSession.getPlayerStatus() && PlayerStatus.LEAVE != clientSession.getPlayerStatus();
+        return clientSession != null && PlayerType.OFFLINE != clientSession.getPlayerType() && PlayerType.LEAVE != clientSession.getPlayerType();
     }
 
     /**
@@ -141,6 +142,30 @@ public class ActionTaskUtils {
         }
     }
 
+
+    /**
+     * 根据 playerId 取出房间中指定的clientsession
+     * @param roomid
+     * @param playerId
+     * @return
+     */
+    public static ClientSession getOneClientSessionFromRoom(String roomid, String playerId) {
+        ClientSession clientSession = null;
+        List<ClientSession> roomClientSessionList = FooloxUtils.getRoomClientSessionList(roomid);
+        for (ClientSession session : roomClientSessionList) {
+            if (playerId.equals(session.getUserId())) {
+                clientSession = session;
+            }
+        }
+        return clientSession;
+    }
+
+    /**
+     * 更新玩家状态
+     */
+    public static void updatePlayerClientStatus(ClientSession clientSession, PlayerType playerType){
+        GameUtils.updatePlayerClientStatus(clientSession.getUserId(), playerType);
+    }
 
     /**
      * --------------- ---------------
@@ -468,6 +493,6 @@ public class ActionTaskUtils {
     }
 
     public static AbstractTask createAutoTask(int times, GameRoom gameRoom) {
-        return new CreateAutoTask(times, gameRoom, gameRoom.getOrgi());
+        return new CreateAutoTask(times, gameRoom);
     }
 }

@@ -49,7 +49,7 @@ public abstract class Board implements Message {
     private int ratio = 1;            //倍数
     private boolean added;            //已翻倍
 
-    private String banker;        //庄家|地主
+    private String banker;        //庄家|地主 Id
     private String currplayer;    //当前出牌人
     private byte currcard;        //当前出牌
     private Command command;

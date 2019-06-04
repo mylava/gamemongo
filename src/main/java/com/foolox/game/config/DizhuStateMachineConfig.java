@@ -2,9 +2,10 @@ package com.foolox.game.config;
 
 import com.foolox.game.constants.RoomStatus;
 import com.foolox.game.core.engin.game.state.PlayerEvent;
-import com.foolox.game.core.logic.*;
-import com.foolox.game.core.logic.dizhu.action.AutoAction;
-import com.foolox.game.core.logic.dizhu.action.RaiseHandsAction;
+import com.foolox.game.core.logic.action.*;
+import com.foolox.game.core.logic.action.dizhu.AutoAction;
+import com.foolox.game.core.logic.action.dizhu.DizhuPlayCardsAction;
+import com.foolox.game.core.logic.action.dizhu.RaiseHandsAction;
 import com.foolox.game.core.statemachine.StateMachine;
 import com.foolox.game.core.statemachine.config.State;
 import com.foolox.game.core.statemachine.config.Transition;
@@ -61,7 +62,7 @@ public class DizhuStateMachineConfig {
                         .event(PlayerEvent.RAISEHANDS).action(new RaiseHandsAction()))
                 .addTransition(new Transition()
                         .source(RoomStatus.LASTHANDS).target(RoomStatus.PLAY)
-                        .event(PlayerEvent.PLAYCARDS).action(new PlayCardsAction()))
+                        .event(PlayerEvent.PLAYCARDS).action(new DizhuPlayCardsAction()))
                 .addTransition(new Transition()
                         .source(RoomStatus.PLAY).target(RoomStatus.END)
                         .event(PlayerEvent.ALLCARDS).action(new AllCardsAction()))

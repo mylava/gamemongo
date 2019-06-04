@@ -11,13 +11,13 @@ import com.foolox.game.common.util.GameUtils;
 import com.foolox.game.constants.Command;
 import com.foolox.game.constants.PVAConsumeActionEnum;
 import com.foolox.game.constants.PVAInComeActionEnum;
-import com.foolox.game.constants.PlayerStatus;
+import com.foolox.game.constants.PlayerType;
 import com.foolox.game.core.engin.game.ActionTaskUtils;
 import com.foolox.game.core.engin.game.CardType;
 import com.foolox.game.core.engin.game.pva.PVAOperatorResult;
 import com.foolox.game.core.engin.game.pva.PvaTools;
 import com.foolox.game.core.engin.game.state.PlayerEvent;
-import com.foolox.game.core.logic.dizhu.CardsTypeEnum;
+import com.foolox.game.core.logic.CardsTypeEnum;
 import org.apache.commons.lang3.ArrayUtils;
 
 import java.util.Arrays;
@@ -202,7 +202,7 @@ public class DiZhuBoard extends Board {
         TakeCards takeCards = null;
         boolean automic = false;
         //超时了 ， 执行自动出牌
-        if ((auto == true || playCards != null)) {
+        if ((auto || playCards != null)) {
             CardType playCardType = null;
             if (playCards != null && playCards.length > 0) {
                 playCardType = ActionTaskUtils.identification(playCards);
@@ -304,7 +304,7 @@ public class DiZhuBoard extends Board {
             } else {
                 ClientSession nextClientSession = ActionTaskUtils.getClientSession(gameRoom.getId(), takeCards.getNextplayer());
                 if (nextClientSession != null) {
-                    if (PlayerStatus.NORMAL==nextClientSession.getPlayerStatus()) {
+                    if (PlayerType.NORMAL==nextClientSession.getPlayerType()) {
                         GameUtils.getGame(gameRoom.getPlaywayId()).change(gameRoom, PlayerEvent.PLAYCARDS, 25);    //应该从 游戏后台配置参数中获取
                     } else {
                         GameUtils.getGame(gameRoom.getPlaywayId()).change(gameRoom, PlayerEvent.PLAYCARDS, 3);    //应该从游戏后台配置参数中获取
@@ -403,8 +403,6 @@ public class DiZhuBoard extends Board {
          */
         return summary;
     }
-
-
 
     /**
      * 找到玩家数据

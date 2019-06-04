@@ -5,18 +5,22 @@ import com.foolox.game.common.repo.domain.*;
 import com.foolox.game.common.util.redis.RedisService;
 import com.foolox.game.common.util.redis.SystemPrefix;
 import com.foolox.game.constants.PlayerGameStatus;
-import com.foolox.game.constants.PlayerStatus;
+import com.foolox.game.constants.PlayerType;
 import com.foolox.game.core.FooloxDataContext;
+import com.foolox.game.core.FooloxGame;
 import com.foolox.game.core.engin.game.Message;
+import com.foolox.game.core.engin.game.event.Board;
+import com.foolox.game.core.logic.DizhuGame;
+import com.foolox.game.core.logic.MajiangGame;
 import com.foolox.game.core.server.FooloxClient;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import sun.misc.BASE64Encoder;
 
-import javax.servlet.http.HttpServletRequest;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -27,11 +31,12 @@ import java.util.Map;
  */
 public class GameUtils {
 
-/*    private static Map<String,ChessGame> games = new HashMap<String,ChessGame>();
-    static{
-        games.put("dizhu", new DizhuGame()) ;
-        games.put("majiang", new MaJiangGame()) ;
-    }*/
+    private static Map<String, FooloxGame> games = new HashMap<String, FooloxGame>();
+
+    static {
+        games.put("dizhu", new DizhuGame());
+        games.put("majiang", new MajiangGame());
+    }
 
 
     private static RedisService redisService = FooloxDataContext.getApplicationContext().getBean(RedisService.class);
@@ -50,7 +55,7 @@ public class GameUtils {
                 //删除 userId 与 RoomId 的关联关系
                 FooloxUtils.delRoomIdByUserId(clientSession.getUserId());
                 //从 roomId-ClientSessionList 中删除 ClientSession
-                FooloxUtils.removeOneFromRoomClientSession(clientSession.getRoomId(), clientSession.getUserId());
+                FooloxUtils.removeSessionFromRoom(clientSession.getRoomId(), clientSession.getUserId());
             }
 
             /**
@@ -94,19 +99,18 @@ public class GameUtils {
      * 更新玩家状态
      *
      * @param userId
-     * @param status
+     * @param playerType
      */
-    public static void updatePlayerClientStatus(String userId, PlayerStatus status) {
+    public static void updatePlayerClientStatus(String userId, PlayerType playerType) {
         ClientSession clientSession = FooloxUtils.getClientSessionById(userId);
         if (clientSession != null) {
-            clientSession.setPlayerStatus(status);//托管玩家
+            clientSession.setPlayerType(playerType);//托管玩家
             FooloxUtils.setClientSessionById(userId, clientSession);
 
             if (null != clientSession && PlayerGameStatus.PLAYING != clientSession.getPlayerGameStatus()) {
                 clientSession = FooloxUtils.getClientSessionById(userId);
                 FooloxUtils.delClientSessionById(userId);
                 FooloxUtils.delRoomIdByUserId(userId);
-
                 /**
                  * 检查，如果房间没 真人玩家了或者当前玩家是房主 ，就可以解散房间了
                  */
@@ -143,7 +147,7 @@ public class GameUtils {
      * @throws InvocationTargetException
      * @throws IllegalAccessException
      */
-    public static ClientSession createAI(Player player, String playwayId, PlayerStatus playertype) {
+    public static ClientSession createAI(Player player, String playwayId, PlayerType playertype) {
         ClientSession clientSession = null;
         if (player != null) {
             if (StringUtils.isBlank(player.getUsername())) {
@@ -154,14 +158,14 @@ public class GameUtils {
             } else {
                 player.setPassword(FooloxUtils.md5(FooloxUtils.getRandomNumberChar(6)));//随机生成一个6位数的密码 ，备用
             }
-            player.setPlayerStatus(playertype);    //玩家类型
+            player.setPlayerType(playertype);    //玩家类型
             player.setCreateTime(new Date());
             player.setUpdateTime(new Date());
             player.setLastLoginTime(new Date());
 
             AiConfig aiConfig = FooloxUtils.getAiConfigByPlaywayId(playwayId);
 
-            if (PlayerStatus.AI==playertype && aiConfig != null) {
+            if (PlayerType.AI == playertype && aiConfig != null) {
                 player.setCoins(aiConfig.getInitcoins());
             } else {
 //                AccountConfig config = CacheConfigTools.getGameAccountConfig(BMDataContext.SYSTEM_ORGI);
@@ -178,6 +182,38 @@ public class GameUtils {
             }
         }
         return clientSession;
+    }
+
+    /**
+     * 开始游戏，根据玩法创建游戏 对局
+     *
+     * @return
+     */
+    public static Board playGame(List<ClientSession> clientSessionList, GameRoom gameRoom, String banker, int cardsnum) {
+        Board board = null;
+        GamePlayway gamePlayWay = FooloxUtils.getGamePlaywayById(gameRoom.getPlaywayId());
+        if (gamePlayWay != null) {
+            FooloxGame fooloxGame = games.get(gamePlayWay.getCode());
+            if (fooloxGame != null) {
+                board = fooloxGame.process(clientSessionList, gameRoom, gamePlayWay, banker, cardsnum);
+            }
+        }
+        return board;
+    }
+
+    /**
+     * 反转指定的 cards 数组
+     *
+     * @param cards
+     * @return
+     */
+    public static byte[] reverseCards(byte[] cards) {
+        byte[] target_cards = new byte[cards.length];
+        for (int i = 0; i < cards.length; i++) {
+            // 反转后数组的第一个元素等于源数组的最后一个元素：
+            target_cards[i] = cards[cards.length - i - 1];
+        }
+        return target_cards;
     }
 
 

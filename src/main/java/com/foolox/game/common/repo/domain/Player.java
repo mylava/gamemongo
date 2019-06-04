@@ -1,7 +1,7 @@
 package com.foolox.game.common.repo.domain;
 
 import com.foolox.game.common.util.event.UserEvent;
-import com.foolox.game.constants.PlayerStatus;
+import com.foolox.game.constants.PlayerType;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -9,7 +9,6 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.util.Date;
-import java.util.List;
 
 @Data
 @AllArgsConstructor
@@ -59,5 +58,5 @@ public class Player implements UserEvent {
 
     private long coins;      //金币
 
-    private PlayerStatus playerStatus;
+    private PlayerType playerType;
 }

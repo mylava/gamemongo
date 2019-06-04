@@ -12,9 +12,7 @@ import com.foolox.game.common.util.redis.RedisService;
 import com.foolox.game.constants.*;
 import com.foolox.game.core.FooloxDataContext;
 import com.foolox.game.common.repo.domain.ClientSession;
-import com.foolox.game.core.engin.game.ActionTaskUtils;
 import com.foolox.game.core.engin.game.event.Board;
-import com.foolox.game.core.engin.game.event.ChatMessage;
 import com.foolox.game.core.engin.game.event.GameStatus;
 import com.foolox.game.core.engin.game.event.SearchRoomResult;
 import lombok.extern.slf4j.Slf4j;
@@ -189,7 +187,7 @@ public class GameEventHandler implements IWsMsgHandler {
                 //更新当前玩家状态，在线|离线
                 clientSession.setOnline(true);
                 //更新玩家类型为普通玩家
-                clientSession.setPlayerStatus(PlayerStatus.NORMAL);
+                clientSession.setPlayerType(PlayerType.NORMAL);
                 //刷新玩家信息到缓存
                 FooloxUtils.setClientSessionById(userId, clientSession);
 
@@ -453,7 +451,7 @@ public class GameEventHandler implements IWsMsgHandler {
             String redisToken = redisService.get(PlayerPrefix.TOKEN, userId);
             //鉴权
             if (redisToken != null && token.equals(redisToken)) {
-                GameUtils.updatePlayerClientStatus(fooloxClient.getUserId(), PlayerStatus.LEAVE);
+                GameUtils.updatePlayerClientStatus(fooloxClient.getUserId(), PlayerType.LEAVE);
             }
         }
     }

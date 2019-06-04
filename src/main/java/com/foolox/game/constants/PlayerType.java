@@ -6,7 +6,7 @@ package com.foolox.game.constants;
  * @author: lipengfei
  * @date: 19/05/2019
  */
-public enum PlayerStatus {
+public enum PlayerType {
     //AI
     AI,
     NORMAL,		//普通玩家

@@ -134,6 +134,16 @@ public class FooloxUtils {
     }
 
     /**
+     * 删除 roomId 与 Board 映射关系
+     *
+     * @param roomId
+     * @return
+     */
+    public static void delBoardByRoomId(String roomId) {
+        redisService.del(GamePrefix.ROOM_ROOMID_BOARD, roomId);
+    }
+
+    /**
      * 通过 userId 获取 RoomId
      *
      * @param userId
@@ -228,7 +238,7 @@ public class FooloxUtils {
      * @param roomId
      * @param userId
      */
-    public static void removeOneFromRoomClientSession(String roomId, String userId) {
+    public static void removeSessionFromRoom(String roomId, String userId) {
         List<ClientSession> list = redisService.lrange(GamePrefix.ROOM_ROOMID_CLIENTSESSION_LIST, roomId, 0, -1, ClientSession.class);
         for (ClientSession session : list) {
             if (userId.equals(session.getUserId())) {
@@ -236,6 +246,16 @@ public class FooloxUtils {
             }
         }
         redisService.set(GamePrefix.ROOM_ROOMID_CLIENTSESSION_LIST, roomId, list);
+    }
+
+    /**
+     * 通过 roomId 删除 房间内的所有客户端会话 List<ClientSession>
+     *
+     * @param roomId
+     * @return
+     */
+    public static void delRoomClientSessionList(String roomId) {
+        redisService.del(GamePrefix.ROOM_ROOMID_CLIENTSESSION_LIST, roomId);
     }
 
 
@@ -280,7 +300,7 @@ public class FooloxUtils {
      *
      * @return
      */
-    public static GameRoom pollRoomByPlaywayId(String playwayId) {
+    public static GameRoom pollRoomFromQueue(String playwayId) {
         GameRoom gameRoom = null;
         Map<String, GameRoom> map = redisService.hgetAll(GamePrefix.ROOM_PLAYWAY_GAMEROOM_LIST, playwayId, GameRoom.class);
         for (String s : map.keySet()) {
@@ -300,9 +320,16 @@ public class FooloxUtils {
      *
      * @return
      */
-    public static void removeRoomByRoomId(String playwayId, String roomId) {
+    public static void removeRoomFromQueue(String playwayId, String roomId) {
         redisService.hdel(GamePrefix.ROOM_PLAYWAY_GAMEROOM_LIST, playwayId, roomId);
     }
 
-
+    /**
+     * 根据玩法，从撮合队列中取出空闲房间
+     *
+     * @return
+     */
+    public static void addRoom2Queue(String playwayId, GameRoom gameRoom) {
+        redisService.hset(GamePrefix.ROOM_PLAYWAY_GAMEROOM_LIST, playwayId, gameRoom.getId(), gameRoom);
+    }
 }

@@ -1,11 +1,11 @@
-package com.foolox.game.core.logic.majiang.task;
+package com.foolox.game.core.logic.task.majiang;
 
 import com.foolox.game.common.repo.domain.ClientSession;
 import com.foolox.game.common.repo.domain.GameRoom;
 import com.foolox.game.common.util.FooloxUtils;
 import com.foolox.game.common.util.GameUtils;
 import com.foolox.game.constants.Command;
-import com.foolox.game.constants.PlayerStatus;
+import com.foolox.game.constants.PlayerType;
 import com.foolox.game.core.engin.game.ActionTaskUtils;
 import com.foolox.game.core.engin.game.FooloxGameTask;
 import com.foolox.game.core.engin.game.GameBoard;
@@ -78,7 +78,7 @@ public class CreateMJRaiseHandsTask extends AbstractTask implements FooloxGameTa
              */
             ClientSession clientSession = ActionTaskUtils.getClientSession(gameRoom.getId(), banker.getPlayuserId());
 
-            if (PlayerStatus.NORMAL == clientSession.getPlayerStatus()) {
+            if (PlayerType.NORMAL == clientSession.getPlayerType()) {
                 super.getGame(gameRoom.getPlaywayId()).change(gameRoom, PlayerEvent.PLAYCARDS, 8);    //应该从 游戏后台配置参数中获取
             } else {
                 super.getGame(gameRoom.getPlaywayId()).change(gameRoom, PlayerEvent.PLAYCARDS, 3);    //应该从游戏后台配置参数中获取

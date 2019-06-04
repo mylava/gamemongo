@@ -19,6 +19,6 @@ public interface FooloxGame {
      *
      * @return
      */
-    public Board process(List<ClientSession> clientSessions, GameRoom gameRoom, GamePlayway playway, String banker, int cardsnum);
+    Board process(List<ClientSession> clientSessions, GameRoom gameRoom, GamePlayway playway, String banker, int cardsnum);
 
 }

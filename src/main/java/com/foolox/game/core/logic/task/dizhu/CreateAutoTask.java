@@ -1,10 +1,10 @@
-package com.foolox.game.core.logic.dizhu.task;
+package com.foolox.game.core.logic.task.dizhu;
 
 import com.foolox.game.common.repo.domain.ClientSession;
 import com.foolox.game.common.repo.domain.GameRoom;
 import com.foolox.game.common.util.FooloxUtils;
 import com.foolox.game.constants.Command;
-import com.foolox.game.constants.PlayerStatus;
+import com.foolox.game.constants.PlayerType;
 import com.foolox.game.core.engin.game.ActionTaskUtils;
 import com.foolox.game.core.engin.game.FooloxGameTask;
 import com.foolox.game.core.engin.game.GameBoard;
@@ -12,6 +12,10 @@ import com.foolox.game.core.engin.game.event.DiZhuBoard;
 import com.foolox.game.core.engin.game.event.GamePlayer;
 import com.foolox.game.core.engin.game.state.PlayerEvent;
 import com.foolox.game.core.engin.game.task.AbstractTask;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
@@ -22,18 +26,14 @@ import java.util.List;
  * @author: lipengfei
  * @date: 31/05/2019
  */
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode(callSuper = true)
 public class CreateAutoTask extends AbstractTask implements FooloxGameTask {
 
     private long timer;
     private GameRoom gameRoom = null;
-    private String orgi;
-
-    public CreateAutoTask(long timer, GameRoom gameRoom, String orgi) {
-        super();
-        this.timer = timer;
-        this.gameRoom = gameRoom;
-        this.orgi = orgi;
-    }
 
     @Override
     public long getCacheExpiryTime() {
@@ -101,7 +101,7 @@ public class CreateAutoTask extends AbstractTask implements FooloxGameTask {
             List<ClientSession> clientSessionList = FooloxUtils.getRoomClientSessionList(gameRoom.getId());
             for (ClientSession clientSession : clientSessionList) {
                 if (catchPlayer.getPlayuserId().equals(clientSession.getId())) {
-                    if (clientSession.getPlayerStatus() != PlayerStatus.NORMAL) {
+                    if (clientSession.getPlayerType() != PlayerType.NORMAL) {
                         //AI或托管，自动抢地主，后台配置 自动抢地主的触发时间，或者 抢还是不抢， 无配置的情况下，默认的是抢地主
                         isNormal = false;
                         /**
@@ -124,7 +124,7 @@ public class CreateAutoTask extends AbstractTask implements FooloxGameTask {
             FooloxUtils.setBoardByRoomId(gameRoom.getId(), board);
         } else {
             //开始打牌，地主的人是最后一个抢了地主的人
-            super.getGame(gameRoom.getPlaywayId()).change(gameRoom, PlayerEvent.RAISEHANDS);    //通知状态机 , 全部都抢过地主了 ， 把底牌发给 最后一个抢到地主的人
+            super.getGame(gameRoom.getPlaywayId()).change(gameRoom, PlayerEvent.RAISEHANDS);    //通知状态机, 全部都抢过地主了,把底牌发给 最后一个抢到地主的人
         }
     }
 

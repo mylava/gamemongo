@@ -41,6 +41,10 @@ public class GamePlayer implements Message {
 
     private String event;
 
+    public GamePlayer(String playuserId) {
+        this.playuserId = playuserId;
+    }
+
     @Override
     protected GamePlayer clone() {
         try {
