@@ -36,6 +36,6 @@ public class JoinRoom implements Message {
         this.index = index;
         this.maxplayers = maxplayer;
         this.cardroom = gameRoom.isCardroom();
-        this.roomid = gameRoom.getRoomid();
+        this.roomid = gameRoom.getId();
     }
 }

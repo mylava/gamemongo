@@ -4,7 +4,7 @@ import com.foolox.game.common.repo.domain.ClientSession;
 import com.foolox.game.common.repo.domain.GamePlayway;
 import com.foolox.game.common.repo.domain.GameRoom;
 import com.foolox.game.common.util.GameUtils;
-import com.foolox.game.core.FooloxGame;
+import com.foolox.game.core.FooloxGameProcessor;
 import com.foolox.game.core.engin.game.event.Board;
 import com.foolox.game.core.engin.game.event.DiZhuBoard;
 import com.foolox.game.core.engin.game.event.GamePlayer;
@@ -18,7 +18,7 @@ import java.util.*;
  * @author: lipengfei
  * @date: 30/05/2019
  */
-public class DizhuGame implements FooloxGame {
+public class DizhuGameProcessor implements FooloxGameProcessor {
     @Override
     public Board process(List<ClientSession> clientSessionList, GameRoom gameRoom, GamePlayway playway, String banker, int cardsnum) {
         gameRoom.setCurrentnum(gameRoom.getCurrentnum() + 1);
@@ -31,7 +31,7 @@ public class DizhuGame implements FooloxGame {
         /**
          * 洗牌次数，参数指定，建议洗牌次数 为1次，多次洗牌的随机效果更好，例如：7次
          */
-        for(int i = 0 ; i<playway.getShuffletimes() + 1; i++){
+        for(int i = 0; i<playway.getShuffleTimes() + 1; i++){
             Collections.shuffle(temp);
         }
         byte[] cards = new byte[54] ;

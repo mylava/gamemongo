@@ -1,4 +1,4 @@
-package com.foolox.game.common.model;
+package com.foolox.game.core.statemachine;
 
 import com.foolox.game.common.repo.domain.GameRoom;
 import com.foolox.game.core.engin.game.state.GameEvent;

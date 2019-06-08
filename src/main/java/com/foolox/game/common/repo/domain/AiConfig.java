@@ -21,24 +21,23 @@ import java.util.Date;
 public class AiConfig {
     @Id
     private String id;
-    private String orgi;
     private Date createtime = new Date();
     private String creater;
     private String username;
     private String name;
     private String playwayId;
 
-    private boolean enableai;//启用AI
-    private int waittime = 5; //玩家等待时长
+    private Boolean enableai;//启用AI
+    private Integer waittime = 5; //玩家等待时长
 
-    private int initcoins;            //初始 金币数量
-    private int initcards;            //初始房卡数量
-    private int initdiamonds;        //初始钻石数量
+    private Long initcoins;            //初始 金币数量
+    private Integer initcards;            //初始房卡数量
+    private Integer initdiamonds;        //初始钻石数量
 
     private String exitcon;        //机器人退出条件
-    private int maxai;                //最大AI数量
+    private Integer maxai;                //最大AI数量
 
-    private boolean dicinfo;        //从字典获取 AI的用户昵称、头像信息
-    private boolean aichat;        //启用 AI自动聊天功能
+    private Boolean dicinfo;        //从字典获取 AI的用户昵称、头像信息
+    private Boolean aichat;        //启用 AI自动聊天功能
 
 }

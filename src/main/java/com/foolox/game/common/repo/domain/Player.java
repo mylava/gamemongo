@@ -56,7 +56,7 @@ public class Player implements UserEvent {
 
     private Integer disabled;
 
-    private long coins;      //金币
+    private Long coins;      //金币
 
     private PlayerType playerType;
 }

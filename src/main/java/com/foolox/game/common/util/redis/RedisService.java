@@ -1,9 +1,9 @@
 package com.foolox.game.common.util.redis;
 
-import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.TypeReference;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.context.request.NativeWebRequest;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 
@@ -28,6 +28,7 @@ public class RedisService {
      * String
      * --------------- ---------------
      */
+
     /**
      * 存数据
      *
@@ -36,11 +37,32 @@ public class RedisService {
      * @param value
      * @return
      */
-    public <T> String set(KeyPrefix prefix, String key, String value) {
+    public String set(KeyPrefix prefix, String key, String value) {
         Jedis jedis = null;
         try {
             jedis = jedisPool.getResource();
-            String result = jedis.setex(prefix.getPrefix() + key, prefix.getExpire(), value);
+            String result = jedis.set(prefix.getPrefix() + key, value);
+            return result;
+        } finally {
+            if (null != jedis) {
+                jedis.close();
+            }
+        }
+    }
+
+    /**
+     * 存数据
+     *
+     * @param prefix
+     * @param key
+     * @param value
+     * @return
+     */
+    public String setex(KeyPrefix prefix, String key, int expire, String value) {
+        Jedis jedis = null;
+        try {
+            jedis = jedisPool.getResource();
+            String result = jedis.setex(prefix.getPrefix() + key, expire<=0?prefix.getExpire():expire, value);
             return result;
         } finally {
             if (null != jedis) {
@@ -73,6 +95,28 @@ public class RedisService {
      *
      * @param prefix
      * @param key
+     * @param <T>
+     * @return
+     */
+    public <T> List<T> getList(KeyPrefix prefix, String key, Class<T> clazz) {
+        Jedis jedis = null;
+        try {
+            jedis = jedisPool.getResource();
+            String str = jedis.get(prefix.getPrefix() + key);
+            return JSONObject.parseObject(str, new TypeReference<List<T>>(clazz) {});
+        } finally {
+            if (null != jedis) {
+                jedis.close();
+            }
+        }
+    }
+
+
+    /**
+     * 取数据
+     *
+     * @param prefix
+     * @param key
      * @param clazz
      * @param <T>
      * @return
@@ -91,7 +135,6 @@ public class RedisService {
         }
     }
 
-
     /**
      * 存数据
      *
@@ -109,7 +152,33 @@ public class RedisService {
             if (null == str) {
                 return "";
             }
-            String result = jedis.setex(prefix.getPrefix() + key, prefix.getExpire(), str);
+            String result = jedis.set(prefix.getPrefix() + key, str);
+            return result;
+        } finally {
+            if (null != jedis) {
+                jedis.close();
+            }
+        }
+    }
+
+    /**
+     * 存数据
+     *
+     * @param prefix
+     * @param key
+     * @param value
+     * @param <T>
+     * @return
+     */
+    public <T> String setex(KeyPrefix prefix, String key, int expire, T value) {
+        Jedis jedis = null;
+        try {
+            jedis = jedisPool.getResource();
+            String str = bean2JsonString(value);
+            if (null == str) {
+                return "";
+            }
+            String result = jedis.setex(prefix.getPrefix() + key, expire<=0?prefix.getExpire():expire, str);
             return result;
         } finally {
             if (null != jedis) {
@@ -533,7 +602,7 @@ public class RedisService {
         if (null == value) {
             return null;
         }
-        return JSON.toJSONString(value);
+        return JSONObject.toJSONString(value);
     }
 
     private <T> T jsonString2Bean(String str, Class<T> clazz) {
@@ -543,8 +612,7 @@ public class RedisService {
         if (clazz == String.class) {
             return (T) str;
         }
-        return JSON.toJavaObject(JSON.parseObject(str), clazz);
+        return JSONObject.parseObject(str, clazz);
     }
-
 
 }

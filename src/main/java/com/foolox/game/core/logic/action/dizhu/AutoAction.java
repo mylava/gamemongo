@@ -24,7 +24,7 @@ public class AutoAction implements Action {
             GameRoom gameRoom = FooloxUtils.getRoomById(roomId);
             if (gameRoom != null) {
                 int interval = (int) message.getMessageHeaders().getHeaders().get("interval");
-                FooloxGameTaskUtil.getExpireCache().put(gameRoom.getRoomid(), new CreateAutoTask(interval, gameRoom));
+                FooloxGameTaskUtil.getExpireCache().put(gameRoom.getId(), new CreateAutoTask(interval, gameRoom));
             }
         }
     }

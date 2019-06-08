@@ -23,6 +23,9 @@ public class FooloxDataContext {
     public static final String FOOLOX_GAMESTATUS_EVENT = "gamestatus";
     public static final String FOOLOX_SEARCHROOM_EVENT = "searchroom";
 
+    //系统字典表code
+    public static final String DIC_ORGI = "foolox";
+
     public static ApplicationContext getApplicationContext() {
         return applicationContext;
     }

@@ -23,8 +23,8 @@ public class SystemPrefix extends BasePrefix{
      */
     public static final SystemPrefix CONFIG_ID_PLAYWAY = new SystemPrefix("config:playwayId");
 
-    // gameId -- sysdic
-    public static final SystemPrefix CONFIG_ID_SYSDIC = new SystemPrefix("config:sysdic");
+    // gamemodel.code -- sysdic
+    public static final SystemPrefix CONFIG_CODE_SYSDIC = new SystemPrefix("config:sysdic");
     // aiconfig
     public static final SystemPrefix CONFIG_AI = new SystemPrefix("config:ai");
 

@@ -38,6 +38,6 @@ spring:
 #
 #
 
-foolox.server.port:  7890
+foolox.server.port: 7890
 
 

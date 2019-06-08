@@ -1,5 +1,7 @@
 package com.foolox.game.common.util;
 
+import com.alibaba.fastjson.TypeReference;
+import com.foolox.game.common.model.GameModel;
 import com.foolox.game.common.repo.domain.*;
 import com.foolox.game.common.util.event.UserDataEvent;
 import com.foolox.game.common.util.event.UserDataEventType;
@@ -10,7 +12,6 @@ import com.foolox.game.common.util.redis.RedisService;
 import com.foolox.game.common.util.redis.SystemPrefix;
 import com.foolox.game.core.FooloxDataContext;
 import com.foolox.game.core.engin.game.event.Board;
-import com.foolox.game.core.engin.game.event.GamePlayer;
 import com.lmax.disruptor.dsl.Disruptor;
 import org.springframework.data.mongodb.repository.MongoRepository;
 
@@ -331,5 +332,50 @@ public class FooloxUtils {
      */
     public static void addRoom2Queue(String playwayId, GameRoom gameRoom) {
         redisService.hset(GamePrefix.ROOM_PLAYWAY_GAMEROOM_LIST, playwayId, gameRoom.getId(), gameRoom);
+    }
+
+    /**
+     * 通过 userId 获取 token
+     * @param userId
+     * @return
+     */
+    public static String getTokenByUserId(String userId) {
+        return redisService.get(PlayerPrefix.TOKEN, userId);
+    }
+
+    /**
+     * 通过code 获取 sysDict
+     * @param code
+     * @return
+     */
+    public static SysDic getDictByCode(String code) {
+        return redisService.get(SystemPrefix.CONFIG_CODE_SYSDIC, code, SysDic.class);
+    }
+
+    /**
+     * 保存 code  与 sysDict 映射关系到缓存
+     * @param code
+     * @return
+     */
+    public static void setDictByCode(String code, SysDic sysDic) {
+        redisService.set(SystemPrefix.CONFIG_CODE_SYSDIC, code, sysDic);
+    }
+
+    /**
+     * 保存 机构 与 games 映射关系到缓存
+     * @param orgi
+     * @param gameModelList
+     */
+    public static void setGamesByOrgi(String orgi, List<GameModel> gameModelList) {
+        redisService.set(SystemPrefix.GAMES, orgi, gameModelList);
+    }
+
+    /**
+     * 通过 机构 从缓存中读取 games
+     * @param orgi
+     */
+    public static List<GameModel> getGamesByOrgi(String orgi) {
+        //STAY 取不到再从数据库加载一次
+        return redisService.getList(SystemPrefix.GAMES, orgi, GameModel.class);
     }
 }

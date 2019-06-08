@@ -51,7 +51,7 @@ public class CodeMessage {
     }
 
     public CodeMessage fillArgs(Object... args) {
-//        int code = this.code;
+//        int modelCode = this.modelCode;
         this.message = String.format(this.message,args);
         return this;
     }
@@ -59,7 +59,7 @@ public class CodeMessage {
     @Override
     public String toString() {
         final StringBuffer sb = new StringBuffer("CodeMessage{");
-        sb.append("code=").append(code);
+        sb.append("modelCode=").append(code);
         sb.append(", message='").append(message).append('\'');
         sb.append('}');
         return sb.toString();

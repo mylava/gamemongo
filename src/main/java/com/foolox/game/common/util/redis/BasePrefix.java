@@ -11,6 +11,7 @@ package com.foolox.game.common.util.redis;
  */
 public abstract class BasePrefix implements KeyPrefix {
 
+    private static final int DEFAULT_EXPIRE = 3600*24*2;
     private int expireSeconds;
 
     private String prefix;
@@ -23,7 +24,7 @@ public abstract class BasePrefix implements KeyPrefix {
 
     //希望userkey永不过期
     public BasePrefix(String prefix) {
-        this(0,prefix);
+        this(DEFAULT_EXPIRE,prefix);
     }
 
     @Override
@@ -38,6 +39,6 @@ public abstract class BasePrefix implements KeyPrefix {
     @Override
     public String getPrefix() {
 //        String simpleName = getClass().getSimpleName();
-        return "foolox:"+this.prefix+":";
+        return this.prefix+":";
     }
 }

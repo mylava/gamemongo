@@ -286,7 +286,7 @@ public class DiZhuBoard extends Board {
             /**
              * 移除定时器，然后重新设置
              */
-            FooloxGameTaskUtil.getExpireCache().remove(gameRoom.getRoomid());
+            FooloxGameTaskUtil.getExpireCache().remove(gameRoom.getId());
 
 
             if (takeCards.getCards() != null && takeCards.getCards().length == 1) {

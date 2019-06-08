@@ -22,6 +22,6 @@ public class RoomReady implements Message {
 
     public RoomReady(GameRoom gameRoom) {
         this.cardroom = gameRoom.isCardroom();
-        this.roomid = gameRoom.getRoomid();
+        this.roomid = gameRoom.getId();
     }
 }

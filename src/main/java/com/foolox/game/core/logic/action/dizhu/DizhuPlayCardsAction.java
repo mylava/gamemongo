@@ -30,7 +30,7 @@ public class DizhuPlayCardsAction implements Action {
                 if (!StringUtils.isBlank(board.getNextplayer().getNextplayer())) {
                     nextPlayer = board.getNextplayer().getNextplayer();
                 }
-                FooloxGameTaskUtil.getExpireCache().put(gameRoom.getRoomid(), new CreatePlayCardsTask(interval, gameRoom, nextPlayer));
+                FooloxGameTaskUtil.getExpireCache().put(gameRoom.getId(), new CreatePlayCardsTask(interval, gameRoom, nextPlayer));
             }
         }
     }

@@ -13,7 +13,7 @@ import java.util.List;
  * @author: lipengfei
  * @date: 30/05/2019
  */
-public interface FooloxGame {
+public interface FooloxGameProcessor {
     /**
      * 创建一局新游戏
      *

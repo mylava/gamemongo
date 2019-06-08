@@ -24,10 +24,9 @@ import java.util.Map;
 @Document(collection = "gameroom")
 public class GameRoom implements UserEvent {
     @Id
-    private String id;
+    private String id; //房间ID，房卡游戏的 房间ID是 6位数字，其他为 UUID
     private String name;
     private String code;
-    private String roomid;    //房间ID，房卡游戏的 房间ID是 6位数字，其他为 UUID
 
     private boolean matchmodel;    //是否比赛房间
     private String matchid;//赛事ID
@@ -46,7 +45,6 @@ public class GameRoom implements UserEvent {
     private RoomStatus status;    //当前状态
 
     private Date updatetime;
-    private String orgi;
     private String area;
 
     private String game;    //游戏类型 ： 麻将：地主：德州

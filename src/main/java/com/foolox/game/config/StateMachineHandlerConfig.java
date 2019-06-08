@@ -1,6 +1,6 @@
 package com.foolox.game.config;
 
-import com.foolox.game.common.model.Game;
+import com.foolox.game.core.statemachine.Game;
 import com.foolox.game.core.statemachine.StateMachine;
 import com.foolox.game.core.statemachine.handler.StateMachineHandler;
 import org.springframework.context.annotation.Bean;

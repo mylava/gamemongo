@@ -19,7 +19,6 @@ public class GameEvent {
     public String roomid;
     //事件
     private PlayerEvent eventType;
-    private String orgi;
     //游戏房间对象
     private GameRoom gameRoom;
     //当前玩家 顺序号

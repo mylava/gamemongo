@@ -39,6 +39,12 @@ public class PlayerService {
         Player probe = new Player();
         probe.setUsername(username);
         Example<Player> example = Example.of(probe);
-        return playerRepository.findOne(example).get();
+        Player result = null;
+        try {
+            result = playerRepository.findOne(example).get();
+        } catch (Exception e) {
+            log.error(e.getMessage());
+        }
+        return result;
     }
 }

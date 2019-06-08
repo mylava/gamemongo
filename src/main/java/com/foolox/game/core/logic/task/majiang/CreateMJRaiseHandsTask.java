@@ -25,13 +25,11 @@ import com.foolox.game.core.engin.game.task.AbstractTask;
 public class CreateMJRaiseHandsTask extends AbstractTask implements FooloxGameTask {
     private long timer;
     private GameRoom gameRoom = null;
-    private String orgi;
 
-    public CreateMJRaiseHandsTask(long timer, GameRoom gameRoom, String orgi) {
+    public CreateMJRaiseHandsTask(long timer, GameRoom gameRoom) {
         super();
         this.timer = timer;
         this.gameRoom = gameRoom;
-        this.orgi = orgi;
     }
 
     @Override

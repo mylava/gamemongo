@@ -23,7 +23,7 @@ public class AllCardsAction implements Action {
         if (!StringUtils.isBlank(roomId)) {
             GameRoom gameRoom = FooloxUtils.getRoomById(roomId);
             if (gameRoom != null) {
-                FooloxGameTaskUtil.getExpireCache().put(gameRoom.getRoomid(), new CreateAllCardsTask(0, gameRoom));
+                FooloxGameTaskUtil.getExpireCache().put(gameRoom.getId(), new CreateAllCardsTask(0, gameRoom));
             }
         }
     }

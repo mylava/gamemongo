@@ -28,8 +28,8 @@ public class EnterAction implements Action {
             GameRoom gameRoom = FooloxUtils.getRoomById(roomId);
             if (gameRoom != null) {
                 if (!gameRoom.isCardroom()) {
-                    AiConfig aiConfig = FooloxUtils.getAiConfigByPlaywayId(gameRoom.getParentid());
-                    if (aiConfig.isEnableai()) {
+                    AiConfig aiConfig = FooloxUtils.getAiConfigByPlaywayId(gameRoom.getPlaywayId());
+                    if (aiConfig.getEnableai()) {
                         FooloxGameTaskUtil.getExpireCache().put(gameRoom.getId(), new CreateAITask(aiConfig.getWaittime(), gameRoom));
                     }
                 }

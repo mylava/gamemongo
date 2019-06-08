@@ -22,31 +22,24 @@ public class SysDic {
     @Id
     private String id;
     private String name;
-    private String title = "pub";
+    private String title;
     private String code;
-    private String orgi;
-    private String ctype;
-    private String parentid;
-    private String iconstr;
-    private String iconskin;
+    private String parentId;
+    private String iconUrl;
     private String description;
-    private String catetype;
     private String memo;
     private String creater;
-    private boolean haschild;                //修改用处，改为启用还是禁用了
-    private boolean discode;                //是否显示code
+    private Boolean enable;                //启用还是禁用 暂时无用
     private Date createtime;
     private Date updatetime;
-    private int sortindex;
-    private String dicid;
+    private Integer sortIndex;
 
     private String menutype;                //菜单类型，顶部导航菜单， 左侧菜单
 
     private String rules;                    //角色要求
 
-    private String module;
     private String url;
-    private String mlevel;                    //菜单级别， 一级 菜单， 二级菜单
+    private String level;                    //菜单级别， 一级 菜单， 二级菜单
 
-    private boolean defaultvalue = false;
+    private Boolean defaultvalue = false;
 }

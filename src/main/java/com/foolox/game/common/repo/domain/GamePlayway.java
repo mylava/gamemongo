@@ -10,7 +10,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 import java.util.Date;
 
 /**
- * comment: 游戏玩法
+ * comment: 具体某个游戏的玩法 相当于 playtypedto
  *
  * @author: lipengfei
  * @date: 11/05/2019
@@ -23,55 +23,34 @@ public class GamePlayway {
     @Id
     private String id;
     private String name;
-    //游戏代码
-    private String code;
+    //GameModel.code
+    private String modelCode; //游戏类型 ： 麻将：地主：德州
+    //创建时间
     private Date createtime;
-    private String parentid;
-    private String typeid;
+    //GameType.code
+    private String typeCode;
+    private String parentId;
     private String creater;
-
-    private int sortindex = 1;    //排序编号
+    private Integer sortIndex = 1;    //排序编号
     private String username;
 
-    private String typelevel;    //初级|高级
-    private String typecolor;    //玩法图标颜色
-
-    private String status;    //当前状态
-
-    private int score;        //底分
-    private int mincoins;    //最小金币数量
-    private int maxcoins;    //最大金币数量
-
-    private boolean wind;    //有无风
-
-    private int shuffletimes;    //洗牌次数
-
-    private String powerful;    //癞子生成规则  ，
-
+    private String level;    //初|中|高级等  1表示最低
+    private String iconUrl;    //玩法图标
+    private Integer score;        //底分
+    private Integer minScore;    //最小分数
+    private Integer maxScore;    //最大分数
+    private Integer shuffleTimes=1;    //洗牌次数 0 表示不洗牌
     private int cardsNum;    //每个玩家获牌数量
 
-    private boolean changecard;    //换牌
-
-    private boolean shuffle;    //是否洗牌
-
-
     private Date updatetime;
-    private String orgi;
     private String area;
-
-    private String game;    //游戏类型 ： 麻将：地主：德州
-    private int maxPlayerNum;    //最大游戏人数
-
-    private int numofgames;//局数 ， 大厅游戏为 0 表示 无限
-
-    private String wintype;//胡牌方式，推倒胡，血战 、 血流
-
+    private Integer maxPlayerNum=4;    //最大游戏人数
+    private Integer minPlayerNum=2;    //最小游戏人数（达到最小人数就可以开始游戏）
+    private Integer numOfGames;//局数 ， 大厅游戏为 0 表示 无限
     private RoomType roomtype;    //房间类型， 房卡：大厅：俱乐部
     private String memo;        //备注信息，不超过30个字
-    private boolean free;        //开启房卡限免
-    private String roomtitle;    //玩法标题
-    private boolean extpro;    //启用扩展属性配置（房卡游戏中的自定义规则）
+    private String title;    //玩法标题
 
-    private String cardsrules;    //定义允许的出牌规则
-    private String mjwinrules; //麻将允许的胡牌规则
+    private String wintype;//胡牌方式，推倒胡，血战 、 血流
+    private OtherRules otherRules;    //扩展属性配置（房自定义规则）
 }

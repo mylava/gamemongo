@@ -1,17 +1,17 @@
 package com.foolox.game.common.util;
 
-import com.foolox.game.common.model.Game;
+import com.foolox.game.core.statemachine.Game;
 import com.foolox.game.common.repo.domain.*;
 import com.foolox.game.common.util.redis.RedisService;
 import com.foolox.game.common.util.redis.SystemPrefix;
 import com.foolox.game.constants.PlayerGameStatus;
 import com.foolox.game.constants.PlayerType;
 import com.foolox.game.core.FooloxDataContext;
-import com.foolox.game.core.FooloxGame;
+import com.foolox.game.core.FooloxGameProcessor;
 import com.foolox.game.core.engin.game.Message;
 import com.foolox.game.core.engin.game.event.Board;
-import com.foolox.game.core.logic.DizhuGame;
-import com.foolox.game.core.logic.MajiangGame;
+import com.foolox.game.core.logic.DizhuGameProcessor;
+import com.foolox.game.core.logic.MajiangGameProcessor;
 import com.foolox.game.core.server.FooloxClient;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
@@ -31,11 +31,11 @@ import java.util.Map;
  */
 public class GameUtils {
 
-    private static Map<String, FooloxGame> games = new HashMap<String, FooloxGame>();
+    private static Map<String, FooloxGameProcessor> games = new HashMap<String, FooloxGameProcessor>();
 
     static {
-        games.put("dizhu", new DizhuGame());
-        games.put("majiang", new MajiangGame());
+        games.put("dizhu", new DizhuGameProcessor());
+        games.put("majiang", new MajiangGameProcessor());
     }
 
 
@@ -85,10 +85,9 @@ public class GameUtils {
         GamePlayway gamePlayway = FooloxUtils.getGamePlaywayById(playwayId);
         Game game = null;
         if (gamePlayway != null) {
-            SysDic dic = redisService.get(SystemPrefix.CONFIG_ID_SYSDIC, gamePlayway.getGame(), SysDic.class);
-            if (dic.getCode().equals("dizhu") || gamePlayway.getCode().equals("dizhu")) {
+            if (gamePlayway.getModelCode().equals("dizhu")) {
                 game = FooloxDataContext.getApplicationContext().getBean("dizhuGame", Game.class);
-            } else if (dic.getCode().equals("majiang") || gamePlayway.getCode().equals("majiang")) {
+            } else if (gamePlayway.getModelCode().equals("majiang")) {
                 game = FooloxDataContext.getApplicationContext().getBean("majiangGame", Game.class);
             }
         }
@@ -193,9 +192,9 @@ public class GameUtils {
         Board board = null;
         GamePlayway gamePlayWay = FooloxUtils.getGamePlaywayById(gameRoom.getPlaywayId());
         if (gamePlayWay != null) {
-            FooloxGame fooloxGame = games.get(gamePlayWay.getCode());
-            if (fooloxGame != null) {
-                board = fooloxGame.process(clientSessionList, gameRoom, gamePlayWay, banker, cardsnum);
+            FooloxGameProcessor fooloxGameProcessor = games.get(gamePlayWay.getModelCode());
+            if (fooloxGameProcessor != null) {
+                board = fooloxGameProcessor.process(clientSessionList, gameRoom, gamePlayWay, banker, cardsnum);
             }
         }
         return board;

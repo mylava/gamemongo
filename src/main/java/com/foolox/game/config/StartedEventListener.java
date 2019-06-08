@@ -1,16 +1,23 @@
 package com.foolox.game.config;
 
+import com.foolox.game.common.model.GameModel;
+import com.foolox.game.common.model.GameType;
+import com.foolox.game.common.model.Playway;
 import com.foolox.game.common.repo.dao.GamePlaywayRepository;
+import com.foolox.game.common.repo.dao.SysDicRepository;
 import com.foolox.game.common.repo.domain.GamePlayway;
+import com.foolox.game.common.repo.domain.SysDic;
 import com.foolox.game.common.util.FooloxUtils;
-import com.foolox.game.common.util.redis.RedisService;
-import com.foolox.game.common.util.redis.SystemPrefix;
 import com.foolox.game.core.FooloxDataContext;
 import com.foolox.game.core.engin.game.GameEngine;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationListener;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.context.event.ContextRefreshedEvent;
+import org.springframework.data.domain.Example;
 
 import javax.annotation.Resource;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -22,81 +29,156 @@ import java.util.List;
  * @author: lipengfei
  * @date: 20/05/2019
  */
+@Slf4j
+@Configuration
 public class StartedEventListener implements ApplicationListener<ContextRefreshedEvent> {
     @Resource
     private GameEngine gameEngine;
-
+    @Resource
+    private SysDicRepository sysDicRepository;
     @Resource
     private GamePlaywayRepository playwayRepository;
 
     @Override
     public void onApplicationEvent(ContextRefreshedEvent event) {
 
-        if(FooloxDataContext.getApplicationContext() == null){
-
+        if (FooloxDataContext.getApplicationContext() == null) {
             FooloxDataContext.setApplicationContext(event.getApplicationContext());
         }
         FooloxDataContext.setGameEngine(gameEngine);
 
-        List<GamePlayway> gamePlaywayList = playwayRepository.findAll() ;
-        if(gamePlaywayList != null){
-            for(GamePlayway playway : gamePlaywayList){
-                FooloxUtils.setGamePlaywayById(playway.getId(), playway);
-            }
-        }
-
-
-//        sysDicRes = event.getApplicationContext().getBean(SysDicRepository.class) ;
-//        List<SysDic> sysDicList = sysDicRes.findAll() ;
+        //加载运营机构信息、游戏分类信息
+        loadGameModel(loadORGI());
 //
-//        for(SysDic dic : sysDicList){
-//            CacheHelper.getSystemCacheBean().put(dic.getId(), dic, dic.getOrgi());
-//            if(dic.getParentid().equals("0")){
-//                List<SysDic> sysDicItemList = new ArrayList<SysDic>();
-//                for(SysDic item : sysDicList){
-//                    if(item.getDicid()!=null && item.getDicid().equals(dic.getId())){
-//                        sysDicItemList.add(item) ;
-//                    }
-//                }
-//                CacheHelper.getSystemCacheBean().put(dic.getCode(), sysDicItemList, dic.getOrgi());
-//            }
-//        }
-//        /**
-//         * 加载系统全局配置
-//         */
-//        SystemConfigRepository systemConfigRes = event.getApplicationContext().getBean(SystemConfigRepository.class) ;
-//        SystemConfig config = systemConfigRes.findByOrgi(FooloxDataContext.SYSTEM_ORGI) ;
-//        if(config != null){
-//            CacheHelper.getSystemCacheBean().put("systemConfig", config, FooloxDataContext.SYSTEM_ORGI);
-//        }
-//
-//
-//        GamePlaywayRepository playwayRes = event.getApplicationContext().getBean(GamePlaywayRepository.class) ;
-//        List<GamePlayway> gamePlaywayList = playwayRes.findAll() ;
-//        if(gamePlaywayList != null){
-//            for(GamePlayway playwayId : gamePlaywayList){
-//                CacheHelper.getSystemCacheBean().put(playwayId.getId(), playwayId, playwayId.getOrgi());
-//            }
-//        }
-//
-//        GameRoomRepository gameRoomRes = event.getApplicationContext().getBean(GameRoomRepository.class) ;
-//        List<GameRoom> gameRoomList = gameRoomRes.findAll() ;
-//        if(gameRoomList!= null){
-//            for(GameRoom gameRoom : gameRoomList){
-//                if(gameRoom.isCardroom()){
-//                    gameRoomRes.delete(gameRoom);//回收房卡房间资源
-//                }else{
-//                    CacheHelper.getQueneCache().put(gameRoom, gameRoom.getOrgi());
-//                    CacheHelper.getGameRoomCacheBean().put(gameRoom.getId(), gameRoom, gameRoom.getOrgi());
-//                }
-//            }
-//        }
-//
-//        GenerationRepository generationRes = event.getApplicationContext().getBean(GenerationRepository.class) ;
-//        List<Generation> generationList = generationRes.findAll() ;
-//        for(Generation generation : generationList){
-//            CacheHelper.getSystemCacheBean().setAtomicLong(FooloxDataContext.ModelType.ROOM.toString(), generation.getStartinx());
-//        }
-
     }
+
+    /**
+     * 加载运营机构信息
+     *
+     * @return
+     */
+    private String loadORGI() {
+        SysDic probe = new SysDic();
+        probe.setCode(FooloxDataContext.DIC_ORGI);
+        Example<SysDic> example = Example.of(probe);
+        SysDic sysDic = null;
+        try {
+            sysDic = sysDicRepository.findOne(example).get();
+        } catch (Exception e) {
+            log.error("加载运营结构配置失败！");
+        }
+        if (null != sysDic) {
+            //运营机构配置
+            FooloxUtils.setDictByCode(sysDic.getCode(), sysDic);
+            return sysDic.getId();
+        }
+        return null;
+    }
+
+    /**
+     * 加载GameModel信息
+     *
+     * @param parentId
+     */
+    private void loadGameModel(String parentId) {
+        //根据parentId 查询 gameModel
+        SysDic modelProbe = new SysDic();
+        modelProbe.setParentId(parentId);
+        Example<SysDic> modelExample = Example.of(modelProbe);
+        try {
+            List<SysDic> list = sysDicRepository.findAll(modelExample);
+            if (null != list) {
+                List<GameModel> gameModelList = new ArrayList<>();
+                for (SysDic model : list) {
+                    GameModel gameModel = new GameModel();
+                    gameModel.setId(model.getId());
+                    gameModel.setName(model.getName());
+                    gameModel.setCode(model.getCode());
+
+                    loadGameType(gameModel);
+                    gameModelList.add(gameModel);
+                    //缓存字典信息
+                    FooloxUtils.setDictByCode(gameModel.getCode(), model);
+                    //缓存gameModel
+                }
+                FooloxUtils.setGamesByOrgi(FooloxDataContext.DIC_ORGI, gameModelList);
+            }
+        } catch (Exception e) {
+            log.error("加载GameModel配置失败！");
+        }
+    }
+
+
+    /**
+     * 加载GameType信息
+     *
+     * @param gameModel
+     */
+    private void loadGameType(GameModel gameModel) {
+        //根据parentId 查询 gameType
+        SysDic probe = new SysDic();
+        probe.setParentId(gameModel.getId());
+        Example<SysDic> example = Example.of(probe);
+        try {
+            List<SysDic> list = sysDicRepository.findAll(example);
+            if (null != list) {
+                List<GameType> gameTypeList = new ArrayList<>();
+                for (SysDic type : list) {
+                    GameType gameType = new GameType();
+                    gameType.setId(type.getId());
+                    gameType.setName(type.getName());
+                    gameType.setCode(type.getCode());
+                    gameType.setModelCode(gameModel.getCode());
+                    loadGamePlayWay(gameType);
+
+                    gameTypeList.add(gameType);
+                    //缓存字典信息
+                    FooloxUtils.setDictByCode(gameModel.getCode(), type);
+                }
+                gameModel.setGameTypeList(gameTypeList);
+            }
+        } catch (Exception e) {
+            log.error("加载GameModel配置失败！");
+        }
+    }
+
+    /**
+     * 加载GameType信息
+     *
+     * @param gameType
+     */
+    private void loadGamePlayWay(GameType gameType) {
+        //根据parentId 查询 gameType
+        GamePlayway probe = new GamePlayway();
+        probe.setModelCode(gameType.getModelCode());
+        probe.setTypeCode(gameType.getCode());
+        Example<GamePlayway> example = Example.of(probe);
+        try {
+            List<GamePlayway> list = playwayRepository.findAll(example);
+            if (null != list) {
+                List<Playway> playwayList = new ArrayList<>();
+                for (GamePlayway gamePlayway : list) {
+                    Playway playway = new Playway();
+                    playway.setId(gamePlayway.getId());
+                    playway.setName(gamePlayway.getName());
+                    playway.setScore(gamePlayway.getScore());
+                    playway.setMinScore(gamePlayway.getMinScore());
+                    playway.setMaxScore(gamePlayway.getMaxScore());
+                    playway.setLevel(gamePlayway.getLevel());
+                    playway.setIconUrl(gamePlayway.getIconUrl());
+                    playway.setMemo(gamePlayway.getMemo());
+                    playway.setTitle(gamePlayway.getTitle());
+                    //STAY 自定义规则，根据需求
+//                    playway.setOtherRules(gamePlayway.getOtherRules());
+                    playwayList.add(playway);
+                    //缓存gamePlayway
+                    FooloxUtils.setGamePlaywayById(gamePlayway.getId(), gamePlayway);
+                }
+                gameType.setPlaywayList(playwayList);
+            }
+        } catch (Exception e) {
+            log.error("加载GameModel配置失败！");
+        }
+    }
+
 }

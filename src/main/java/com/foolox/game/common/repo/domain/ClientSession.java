@@ -58,8 +58,6 @@ public class ClientSession implements UserEvent {
      * 机构相关信息
      * --------------- ---------------
      */
-    //组织机构(租户)
-    private String orgi;
 
     /**
      * --------------- ---------------

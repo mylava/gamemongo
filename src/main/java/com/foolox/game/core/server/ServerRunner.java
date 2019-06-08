@@ -38,9 +38,8 @@ public class ServerRunner implements CommandLineRunner {
 
     private void initGame() {
         //租户信息
-        SystemDict orgi = systemDictService.findOneByCodeType(SystemConstant.SYSTEM_ORGI, DictType.GAME_CONFIG);
+//        SystemDictService.findOneByCodeType(SystemConstant.SYSTEM_ORGI, DictType.GAME_CONFIG);
         //更新配置信息到缓存中
-        refresh(orgi.getDicts());
     }
 
     @Override

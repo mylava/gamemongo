@@ -7,8 +7,6 @@ import com.foolox.game.common.repo.domain.GameRoom;
 import com.foolox.game.common.util.FooloxUtils;
 import com.foolox.game.common.util.GameUtils;
 import com.foolox.game.common.util.client.FooloxClientContext;
-import com.foolox.game.common.util.redis.PlayerPrefix;
-import com.foolox.game.common.util.redis.RedisService;
 import com.foolox.game.constants.*;
 import com.foolox.game.core.FooloxDataContext;
 import com.foolox.game.common.repo.domain.ClientSession;
@@ -45,8 +43,6 @@ public class GameEventHandler implements IWsMsgHandler {
     public void setServer(GameServer server) {
         this.server = server;
     }
-
-    private RedisService redisService = FooloxDataContext.getApplicationContext().getBean(RedisService.class);
 
     /**
      * 握手时走这个方法，业务可以在这里获取cookie，request参数等
@@ -172,7 +168,7 @@ public class GameEventHandler implements IWsMsgHandler {
              * 	  a、创建房间
              * 	  b、加入到等待中队列
              */
-            String redisToken = redisService.get(PlayerPrefix.TOKEN, userId);
+            String redisToken = FooloxUtils.getTokenByUserId(userId);
             //鉴权通过
             if (redisToken != null && token.equals(redisToken)) {
                 //心跳开始时间
@@ -213,7 +209,7 @@ public class GameEventHandler implements IWsMsgHandler {
         //设置玩家为未就绪状态（不能游戏）
         gameStatus.setGamestatus(PlayerGameStatus.NOTREADY.toString());
         if (!StringUtils.isBlank(token) && !StringUtils.isBlank(userId)) {
-            String redisToken = redisService.get(PlayerPrefix.TOKEN, userId);
+            String redisToken = FooloxUtils.getTokenByUserId(userId);
             //鉴权
             if (redisToken != null && token.equals(redisToken)) {
                 ClientSession clientSession = FooloxUtils.getClientSessionById(userId);
@@ -225,12 +221,11 @@ public class GameEventHandler implements IWsMsgHandler {
                     //Room 和 Board 都不为空，表示已经在游戏中（断线重连情况）
                     if (!StringUtils.isBlank(roomId) && FooloxUtils.getBoardByRoomId(roomId, Board.class) != null) {
                         gameStatus.setUserid(clientSession.getUserId());
-                        gameStatus.setOrgi(clientSession.getOrgi());
                         //读取房间信息
                         GameRoom gameRoom = FooloxUtils.getRoomById(roomId);
                         //读取玩法信息
                         GamePlayway gamePlayway = FooloxUtils.getGamePlaywayById(gameRoom.getPlaywayId());
-                        gameStatus.setGametype(gamePlayway.getCode());
+                        gameStatus.setGametype(gamePlayway.getModelCode());
                         gameStatus.setPlayway(gamePlayway.getId());
                         //更新玩家状态为游戏中
                         gameStatus.setGamestatus(PlayerGameStatus.PLAYING.toString());
@@ -258,7 +253,7 @@ public class GameEventHandler implements IWsMsgHandler {
         String token = fooloxClient.getToken();
         String userId = fooloxClient.getUserId();
         if (!StringUtils.isBlank(token) && !StringUtils.isBlank(userId)) {
-            String redisToken = redisService.get(PlayerPrefix.TOKEN, userId);
+            String redisToken = FooloxUtils.getTokenByUserId(userId);
             //鉴权
             if (redisToken != null && token.equals(redisToken)) {
                 String roomid = FooloxUtils.getRoomIdByUserId(userId);
@@ -276,7 +271,7 @@ public class GameEventHandler implements IWsMsgHandler {
         String token = fooloxClient.getToken();
         String userId = fooloxClient.getUserId();
         if (!StringUtils.isBlank(token) && !StringUtils.isBlank(userId)) {
-            String redisToken = redisService.get(PlayerPrefix.TOKEN, userId);
+            String redisToken = FooloxUtils.getTokenByUserId(userId);
             //鉴权
             if (redisToken != null && token.equals(redisToken)) {
                 String roomid = FooloxUtils.getRoomIdByUserId(userId);
@@ -294,7 +289,7 @@ public class GameEventHandler implements IWsMsgHandler {
         String token = fooloxClient.getToken();
         String userId = fooloxClient.getUserId();
         if (!StringUtils.isBlank(token) && !StringUtils.isBlank(userId)) {
-            String redisToken = redisService.get(PlayerPrefix.TOKEN, userId);
+            String redisToken = FooloxUtils.getTokenByUserId(userId);
             //鉴权
             if (redisToken != null && token.equals(redisToken)) {
                 ClientSession clientSession = FooloxUtils.getClientSessionById(userId);
@@ -313,7 +308,7 @@ public class GameEventHandler implements IWsMsgHandler {
         String token = fooloxClient.getToken();
         String userId = fooloxClient.getUserId();
         if (!StringUtils.isBlank(token) && !StringUtils.isBlank(userId)) {
-            String redisToken = redisService.get(PlayerPrefix.TOKEN, userId);
+            String redisToken = FooloxUtils.getTokenByUserId(userId);
             //鉴权
             if (redisToken != null && token.equals(redisToken)) {
                 String roomid = FooloxUtils.getRoomIdByUserId(userId);
@@ -337,7 +332,7 @@ public class GameEventHandler implements IWsMsgHandler {
         String token = fooloxClient.getToken();
         String userId = fooloxClient.getUserId();
         if (!StringUtils.isBlank(token) && !StringUtils.isBlank(userId)) {
-            String redisToken = redisService.get(PlayerPrefix.TOKEN, userId);
+            String redisToken = FooloxUtils.getTokenByUserId(userId);
             //鉴权
             if (redisToken != null && token.equals(redisToken)) {
                 String roomid = FooloxUtils.getRoomIdByUserId(userId);
@@ -355,7 +350,7 @@ public class GameEventHandler implements IWsMsgHandler {
         String token = fooloxClient.getToken();
         String userId = fooloxClient.getUserId();
         if (!StringUtils.isBlank(token) && !StringUtils.isBlank(userId)) {
-            String redisToken = redisService.get(PlayerPrefix.TOKEN, userId);
+            String redisToken = FooloxUtils.getTokenByUserId(userId);
             //鉴权
             if (redisToken != null && token.equals(redisToken)) {
                 String roomid = FooloxUtils.getRoomIdByUserId(userId);
@@ -373,7 +368,7 @@ public class GameEventHandler implements IWsMsgHandler {
         String token = fooloxClient.getToken();
         String userId = fooloxClient.getUserId();
         if (!StringUtils.isBlank(token) && !StringUtils.isBlank(userId)) {
-            String redisToken = redisService.get(PlayerPrefix.TOKEN, userId);
+            String redisToken = FooloxUtils.getTokenByUserId(userId);
             //鉴权
             if (redisToken != null && token.equals(redisToken)) {
                 String roomid = FooloxUtils.getRoomIdByUserId(userId);
@@ -391,7 +386,7 @@ public class GameEventHandler implements IWsMsgHandler {
         String token = fooloxClient.getToken();
         String userId = fooloxClient.getUserId();
         if (!StringUtils.isBlank(token) && !StringUtils.isBlank(userId)) {
-            String redisToken = redisService.get(PlayerPrefix.TOKEN, userId);
+            String redisToken = FooloxUtils.getTokenByUserId(userId);
             //鉴权
             if (redisToken != null && token.equals(redisToken)) {
                 ClientSession clientSession = FooloxUtils.getClientSessionById(userId);
@@ -410,7 +405,7 @@ public class GameEventHandler implements IWsMsgHandler {
         String token = fooloxClient.getToken();
         String userId = fooloxClient.getUserId();
         if (!StringUtils.isBlank(token) && !StringUtils.isBlank(userId)) {
-            String redisToken = redisService.get(PlayerPrefix.TOKEN, userId);
+            String redisToken = FooloxUtils.getTokenByUserId(userId);
             //鉴权
             if (redisToken != null && token.equals(redisToken)) {
                 ClientSession clientSession = FooloxUtils.getClientSessionById(userId);
@@ -430,7 +425,7 @@ public class GameEventHandler implements IWsMsgHandler {
         String token = fooloxClient.getToken();
         String userId = fooloxClient.getUserId();
         if (!StringUtils.isBlank(token) && !StringUtils.isBlank(userId)) {
-            String redisToken = redisService.get(PlayerPrefix.TOKEN, userId);
+            String redisToken = FooloxUtils.getTokenByUserId(userId);
             //鉴权
             if (redisToken != null && token.equals(redisToken)) {
                 ClientSession clientSession = FooloxUtils.getClientSessionById(userId);
@@ -448,7 +443,7 @@ public class GameEventHandler implements IWsMsgHandler {
         String token = fooloxClient.getToken();
         String userId = fooloxClient.getUserId();
         if (!StringUtils.isBlank(token) && !StringUtils.isBlank(userId)) {
-            String redisToken = redisService.get(PlayerPrefix.TOKEN, userId);
+            String redisToken = FooloxUtils.getTokenByUserId(userId);
             //鉴权
             if (redisToken != null && token.equals(redisToken)) {
                 GameUtils.updatePlayerClientStatus(fooloxClient.getUserId(), PlayerType.LEAVE);
@@ -467,7 +462,7 @@ public class GameEventHandler implements IWsMsgHandler {
             String token = fooloxClient.getToken();
             String userId = fooloxClient.getUserId();
             if (!StringUtils.isBlank(token) && !StringUtils.isBlank(userId)) {
-                String redisToken = redisService.get(PlayerPrefix.TOKEN, userId);
+                String redisToken = FooloxUtils.getTokenByUserId(userId);
                 //鉴权
                 if (redisToken != null && token.equals(redisToken)) {
                     ClientSession clientSession = FooloxUtils.getClientSessionById(userId);
@@ -497,7 +492,7 @@ public class GameEventHandler implements IWsMsgHandler {
         SearchRoomResult searchRoomResult = null;
         boolean joinRoom = false;
         if (!StringUtils.isBlank(token) && !StringUtils.isBlank(userId)) {
-            String redisToken = redisService.get(PlayerPrefix.TOKEN, userId);
+            String redisToken = FooloxUtils.getTokenByUserId(userId);
             //鉴权
             if (redisToken != null && token.equals(redisToken)) {
                 ClientSession clientSession = FooloxUtils.getClientSessionById(userId);
@@ -519,7 +514,7 @@ public class GameEventHandler implements IWsMsgHandler {
                 if (gamePlayway != null) {
                     //通知客户端
                     if (joinRoom) {        //加入成功 ， 是否需要输入加入密码？
-                        searchRoomResult = new SearchRoomResult(gamePlayway.getId(), gamePlayway.getCode(), SearchRoomResultType.OK.toString());
+                        searchRoomResult = new SearchRoomResult(gamePlayway.getId(), gamePlayway.getModelCode(), SearchRoomResultType.OK.toString());
                     } else {                        //加入失败
                         searchRoomResult = new SearchRoomResult(SearchRoomResultType.FULL.toString());
                     }
@@ -539,7 +534,7 @@ public class GameEventHandler implements IWsMsgHandler {
         String token = fooloxClient.getToken();
         String userId = fooloxClient.getUserId();
         if (!StringUtils.isBlank(token) && !StringUtils.isBlank(userId)) {
-            String redisToken = redisService.get(PlayerPrefix.TOKEN, userId);
+            String redisToken = FooloxUtils.getTokenByUserId(userId);
             //鉴权
             if (redisToken != null && token.equals(redisToken)) {
                 String roomId = FooloxUtils.getRoomIdByUserId(userId);

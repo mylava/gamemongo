@@ -9,8 +9,6 @@ import com.foolox.game.common.util.FooloxGameTaskUtil;
 import com.foolox.game.common.util.FooloxUtils;
 import com.foolox.game.common.util.GameUtils;
 import com.foolox.game.common.util.client.FooloxClientContext;
-import com.foolox.game.common.util.redis.GamePrefix;
-import com.foolox.game.common.util.redis.RedisService;
 import com.foolox.game.constants.*;
 import com.foolox.game.core.FooloxDataContext;
 import com.foolox.game.core.engin.game.event.*;
@@ -21,7 +19,6 @@ import com.foolox.game.core.server.FooloxClient;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.kie.api.runtime.KieSession;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -38,9 +35,6 @@ import java.util.List;
 @Slf4j
 @Service
 public class GameEngine {
-
-    @Autowired
-    private RedisService redisService;
     @Resource
     private KieSession kieSession;
 
@@ -53,20 +47,6 @@ public class GameEngine {
     public void dismissRoom(GameRoom gameRoom, String userId) {
         if (gameRoom.getMaster().equals(userId)) {
             log.info("========================dismissRoom========================");
-            /*List<ClientSession> maxPlayerNum = redisService.get(GamePrefix.ROOM_ROOMID_GAMEROOM, userId, ClientSession.class);
-            for (PlayUserClient clientSessionList : maxPlayerNum) {
-                *//**
-             * 解散房间的时候，只清理 AI
-             *//*
-                if (clientSessionList.getPlayerType().equals(DataContext.PlayerTypeEnum.AI.toString())) {
-                    CacheHelper.getGamePlayerCacheBean().delete(clientSessionList.getId(), orgi);
-                    CacheHelper.getRoomMappingCacheBean().delete(clientSessionList.getId(), orgi);
-                }
-            }*/
-            /**
-             * 先不删
-             */
-//			UKTools.published(gameRoom, null, DataContext.getContext().getBean(GameRoomRepository.class) , DataContext.UserDataEventType.DELETE.toString());
         }
     }
 
@@ -238,8 +218,11 @@ public class GameEngine {
      */
     private GameRoom createGameRoom(GamePlayway playway, String userid, boolean cardroom, FooloxClient fooloxClient) {
         GameRoom gameRoom = new GameRoom();
+        /**
+         * 产生房间ID，麻烦的是需要处理冲突 ，准备采用的算法是 先生成一个号码池子，然后从分布是缓存的 Queue里获取
+         */
+        gameRoom.setId(FooloxUtils.getRandomNumberChar(6));
         gameRoom.setCreatetime(new Date());
-        gameRoom.setRoomid(FooloxUtils.getUUID());
         gameRoom.setUpdatetime(new Date());
 
         if (playway != null) {
@@ -258,8 +241,7 @@ public class GameEngine {
         gameRoom.setCreater(userid);
         gameRoom.setMaster(userid);
         //局数
-        gameRoom.setNumofgames(playway.getNumofgames());
-        gameRoom.setOrgi(playway.getOrgi());
+        gameRoom.setNumofgames(playway.getNumOfGames());
 
         /**
          * 房卡模式启动游戏
@@ -268,10 +250,6 @@ public class GameEngine {
             gameRoom.setRoomtype(RoomType.FEE);
             gameRoom.setCardroom(true);
             gameRoom.setExtparams(fooloxClient.getExtparams());
-            /**
-             * 产生房间ID，麻烦的是需要处理冲突 ，准备采用的算法是 先生成一个号码池子，然后从分布是缓存的 Queue里获取
-             */
-            gameRoom.setRoomid(FooloxUtils.getRandomNumberChar(6));
             /**
              * 分配房间号码 ， 并且，启用 规则引擎，对房间信息进行赋值
              */
@@ -345,7 +323,7 @@ public class GameEngine {
             //更新board 信息到缓存
             FooloxUtils.setBoardByRoomId(gameRoom.getId(), board);
             //1秒后开始执行任务
-            FooloxGameTaskUtil.getExpireCache().put(gameRoom.getRoomid(), ActionTaskUtils.createAutoTask(1, gameRoom));
+            FooloxGameTaskUtil.getExpireCache().put(gameRoom.getId(), ActionTaskUtils.createAutoTask(1, gameRoom));
         }
     }
 
@@ -463,7 +441,7 @@ public class GameEngine {
                     /**
                      * 重置计时器，立即执行
                      */
-                    FooloxGameTaskUtil.getExpireCache().put(gameRoom.getId(), new CreateMJRaiseHandsTask(1, gameRoom, gameRoom.getOrgi()));
+                    FooloxGameTaskUtil.getExpireCache().put(gameRoom.getId(), new CreateMJRaiseHandsTask(1, gameRoom));
                     GameUtils.getGame(gameRoom.getPlaywayId()).change(gameRoom, PlayerEvent.RAISEHANDS, 0);
                 }
             }

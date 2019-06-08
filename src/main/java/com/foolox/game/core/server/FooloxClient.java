@@ -34,7 +34,7 @@ public class FooloxClient {
     //游戏模式：大厅、房卡、俱乐部
     private RoomType roomType;
     //额外参数
-    private Map<String,  String> extparams ;
+    private Map<String, String> extparams;
 
     private String data;
 

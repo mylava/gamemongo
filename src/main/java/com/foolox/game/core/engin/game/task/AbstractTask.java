@@ -1,6 +1,6 @@
 package com.foolox.game.core.engin.game.task;
 
-import com.foolox.game.common.model.Game;
+import com.foolox.game.core.statemachine.Game;
 import com.foolox.game.common.repo.domain.GamePlayway;
 import com.foolox.game.common.repo.domain.GameRoom;
 import com.foolox.game.common.util.GameUtils;

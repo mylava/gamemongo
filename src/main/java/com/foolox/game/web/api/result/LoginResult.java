@@ -1,5 +1,6 @@
 package com.foolox.game.web.api.result;
 
+import com.foolox.game.common.model.GameModel;
 import com.foolox.game.common.repo.domain.SystemDict;
 import com.foolox.game.common.repo.domain.ClientSession;
 import lombok.Data;
@@ -14,8 +15,7 @@ import java.util.List;
  */
 @Data
 public class LoginResult {
-    //    private Token token ;
     private String token;
-    private List<SystemDict> games;
+    private List<GameModel> games;
     private ClientSession clientSession;
 }
