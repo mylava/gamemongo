@@ -4,6 +4,8 @@ import com.alibaba.fastjson.JSON;
 import com.foolox.game.common.repo.dao.ClientSessionRepository;
 import com.foolox.game.common.repo.domain.GamePlayway;
 import com.foolox.game.common.repo.domain.GameRoom;
+import com.foolox.game.common.result.CodeMessage;
+import com.foolox.game.common.result.Result;
 import com.foolox.game.common.util.FooloxUtils;
 import com.foolox.game.common.util.GameUtils;
 import com.foolox.game.common.util.client.FooloxClientContext;
@@ -89,11 +91,11 @@ public class GameEventHandler implements IWsMsgHandler {
             if (!StringUtils.isBlank(fooloxClient.getCommand())) {
                 fooloxClient.setServer(this.server);
                 switch (fooloxClient.getCommand()) {
-                    case "joinroom":
-                        this.onJoinRoom(fooloxClient);
-                        break;
                     case "gamestatus":
                         this.onGameStatus(fooloxClient);
+                        break;
+                    case "joinroom":
+                        this.onJoinRoom(fooloxClient);
                         break;
                     case "docatch":
                         this.onCatch(fooloxClient);
@@ -134,7 +136,9 @@ public class GameEventHandler implements IWsMsgHandler {
                     case "searchroom":
                         this.onSearchRoom(fooloxClient);
                         break;
-                    case "message":this.onMessage(fooloxClient); break;
+                    case "message":
+                        this.onMessage(fooloxClient);
+                        break;
                     default:
                         break;
 
@@ -205,39 +209,51 @@ public class GameEventHandler implements IWsMsgHandler {
     public void onGameStatus(FooloxClient fooloxClient) {
         String token = fooloxClient.getToken();
         String userId = fooloxClient.getUserId();
+        log.info("token={}, userId={}", token, userId);
         GameStatus gameStatus = new GameStatus();
-        //设置玩家为未就绪状态（不能游戏）
-        gameStatus.setGamestatus(PlayerGameStatus.NOTREADY.toString());
-        if (!StringUtils.isBlank(token) && !StringUtils.isBlank(userId)) {
-            String redisToken = FooloxUtils.getTokenByUserId(userId);
-            //鉴权
-            if (redisToken != null && token.equals(redisToken)) {
-                ClientSession clientSession = FooloxUtils.getClientSessionById(userId);
-                if (null != clientSession) {
-                    //鉴权通过，更新玩家状态为就绪（可以游戏）
-                    gameStatus.setGamestatus(PlayerGameStatus.READY.toString());
-                    //查看玩家是否在房间内
-                    String roomId = FooloxUtils.getRoomIdByUserId(userId);
-                    //Room 和 Board 都不为空，表示已经在游戏中（断线重连情况）
-                    if (!StringUtils.isBlank(roomId) && FooloxUtils.getBoardByRoomId(roomId, Board.class) != null) {
-                        gameStatus.setUserid(clientSession.getUserId());
-                        //读取房间信息
-                        GameRoom gameRoom = FooloxUtils.getRoomById(roomId);
-                        //读取玩法信息
-                        GamePlayway gamePlayway = FooloxUtils.getGamePlaywayById(gameRoom.getPlaywayId());
-                        gameStatus.setGametype(gamePlayway.getModelCode());
-                        gameStatus.setPlayway(gamePlayway.getId());
-                        //更新玩家状态为游戏中
-                        gameStatus.setGamestatus(PlayerGameStatus.PLAYING.toString());
-                        //房卡游戏
-                        if (gameRoom.isCardroom()) {
-                            gameStatus.setCardroom(true);
-                        }
-                    }
-                }
-            } else {
-                //更新状态为超时，客户端提示重新登录
-                gameStatus.setGamestatus(PlayerGameStatus.TIMEOUT.toString());
+        if (StringUtils.isBlank(token) || StringUtils.isBlank(userId)) {
+            gameStatus.setCodeMessage(CodeMessage.PARAMS_EMPTY_ERROR.fillArgs("token", "userId"));
+            //设置玩家为未就绪状态（不能游戏）
+            gameStatus.setGamestatus(PlayerGameStatus.NOTREADY.toString());
+            fooloxClient.sendEvent(FooloxDataContext.FOOLOX_GAMESTATUS_EVENT, gameStatus);
+        }
+
+        String redisToken = FooloxUtils.getTokenByUserId(userId);
+        log.info("redisToken={}", redisToken);
+        if (null == redisToken || !token.equals(redisToken)) {
+            gameStatus.setGamestatus(PlayerGameStatus.TIMEOUT.toString());
+            gameStatus.setCodeMessage(CodeMessage.ILLEGAL_TOKEN_ERROR.fillArgs("token", "userId"));
+            fooloxClient.sendEvent(FooloxDataContext.FOOLOX_GAMESTATUS_EVENT, gameStatus);
+        }
+
+        ClientSession clientSession = FooloxUtils.getClientSessionById(userId);
+        log.info("clientSession={}", clientSession);
+        if (null == clientSession) {
+            gameStatus.setGamestatus(PlayerGameStatus.TIMEOUT.toString());
+            gameStatus.setCodeMessage(CodeMessage.ILLEGAL_TOKEN_ERROR.fillArgs("clientSession"));
+            fooloxClient.sendEvent(FooloxDataContext.FOOLOX_GAMESTATUS_EVENT, gameStatus);
+        }
+
+        log.info("user {} ready for game", userId);
+        gameStatus.setCodeMessage(CodeMessage.SUCCESS);
+        //鉴权通过，更新玩家状态为就绪（可以游戏）
+        gameStatus.setGamestatus(PlayerGameStatus.READY.toString());
+        //查看玩家是否在房间内
+        String roomId = FooloxUtils.getRoomIdByUserId(userId);
+        //Room 和 Board 都不为空，表示已经在游戏中（断线重连情况）
+        if (!StringUtils.isBlank(roomId) && FooloxUtils.getBoardByRoomId(roomId, Board.class) != null) {
+            gameStatus.setUserid(clientSession.getUserId());
+            //读取房间信息
+            GameRoom gameRoom = FooloxUtils.getRoomById(roomId);
+            //读取玩法信息
+            GamePlayway gamePlayway = FooloxUtils.getGamePlaywayById(gameRoom.getPlaywayId());
+            gameStatus.setGametype(gamePlayway.getModelCode());
+            gameStatus.setPlayway(gamePlayway.getId());
+            //更新玩家状态为游戏中
+            gameStatus.setGamestatus(PlayerGameStatus.PLAYING.toString());
+            //房卡游戏
+            if (gameRoom.isCardroom()) {
+                gameStatus.setCardroom(true);
             }
         }
         //发送gameStatus到客户端
@@ -528,6 +544,7 @@ public class GameEventHandler implements IWsMsgHandler {
 
     /**
      * 聊天
+     *
      * @param fooloxClient
      */
     public void onMessage(FooloxClient fooloxClient) {

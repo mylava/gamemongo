@@ -14,6 +14,8 @@ public class CodeMessage {
     public static CodeMessage SUCCESS = new CodeMessage(0,"sucess");
     public static CodeMessage SERVER_ERROR = new CodeMessage(500100,"服务端异常");
     public static CodeMessage VALIDATE_ERROR = new CodeMessage(500101,"参数校验异常：%s");
+    public static CodeMessage PARAMS_EMPTY_ERROR = new CodeMessage(500102,"参数为空异常：%s");
+    public static CodeMessage ILLEGAL_TOKEN_ERROR = new CodeMessage(500103,"TOKEN状态异常：%s");
 
     //登录模块 500200
     public static CodeMessage LOGIN_TOKEN_EXPIRED = new CodeMessage(500210,"Token已过期");

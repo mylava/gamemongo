@@ -1,5 +1,6 @@
 package com.foolox.game.core.engin.game;
 
+import com.foolox.game.common.result.CodeMessage;
 import com.foolox.game.constants.Command;
 
 /**
@@ -12,26 +13,41 @@ public interface Message {
 
     /**
      * 发送到客户端的指令
+     *
      * @return
      */
-    public Command getCommand() ;
+    Command getCommand();
 
     /**
      * 指令
+     *
      * @param command
      */
-    public void setCommand(Command command) ;
-
+    void setCommand(Command command);
 
     /**
      * 发送到客户端的事件
+     *
      * @return
      */
-    public String getEvent() ;
+    String getEvent();
 
     /**
      * 事件
+     *
      * @param event
      */
-    public void setEvent(String event) ;
+    void setEvent(String event);
+
+    /**
+     * 响应信息
+     */
+    CodeMessage getCodeMessage();
+
+    /**
+     * 响应信息
+     *
+     * @param errorMsg
+     */
+    void setCodeMessage(CodeMessage errorMsg);
 }

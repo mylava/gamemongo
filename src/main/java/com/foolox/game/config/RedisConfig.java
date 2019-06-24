@@ -1,49 +1,52 @@
 package com.foolox.game.config;
 
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.data.redis.RedisProperties;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
+import org.springframework.cache.CacheManager;
+import org.springframework.cache.annotation.CachingConfigurerSupport;
+import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import redis.clients.jedis.JedisPool;
-import redis.clients.jedis.JedisPoolConfig;
+import org.springframework.data.redis.cache.RedisCacheManager;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.core.RedisOperations;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 /**
  * comment:
  *
  * @author: lipengfei
- * @date: 21/08/2018
+ * @date: 08/06/2019
  */
-
+@EnableCaching
 @Configuration
-public class RedisConfig {
-    @Value("${spring.redis.host}")
-    private String host;
-    @Value("${spring.redis.port}")
-    private int port;
-    @Value("${spring.redis.timeout}")
-    private int timeout;
-    @Value("${spring.redis.password}")
-    private String password;
-    @Value("${spring.redis.database}")
-    private int database;
-    @Value("${spring.redis.jedis.pool.max-active}")
-    private int poolMaxActive;
-    @Value("${spring.redis.jedis.pool.max-idle}")
-    private int poolMaxIdle;
-    @Value("${spring.redis.jedis.pool.max-wait}")
-    private int poolMaxWait;
+@ConditionalOnClass(RedisOperations.class)
+@EnableConfigurationProperties(RedisProperties.class)
+public class RedisConfig extends CachingConfigurerSupport {
 
+    @Bean
+    @ConditionalOnMissingBean(name = "redisTemplate")
+    RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory redisConnectionFactory) {
+        RedisTemplate<String, Object> template = new RedisTemplate<>();
 
-    private JedisPoolConfig jedisPoolConfig() {
-        JedisPoolConfig jedisPoolConfig = new JedisPoolConfig();
-        jedisPoolConfig.setMaxTotal(poolMaxActive);
-        jedisPoolConfig.setMaxIdle(poolMaxIdle);
-        jedisPoolConfig.setMaxWaitMillis(poolMaxWait);
-        return jedisPoolConfig;
+        FastJsonRedisSerializer fastJsonRedisSerializer = new FastJsonRedisSerializer(Object.class);
+        template.setValueSerializer(fastJsonRedisSerializer);
+        template.setHashKeySerializer(fastJsonRedisSerializer);
+        template.setKeySerializer(new StringRedisSerializer());
+        template.setHashKeySerializer(new StringRedisSerializer());
+
+        template.setConnectionFactory(redisConnectionFactory);
+        return template;
     }
 
     @Bean
-    public JedisPool jedispool() {
-        return new JedisPool(jedisPoolConfig(),host,port,timeout,password,database);
+    public CacheManager cacheManager(RedisConnectionFactory redisConnectionFactory) {
+        RedisCacheManager.RedisCacheManagerBuilder builder = RedisCacheManager
+                .RedisCacheManagerBuilder
+                .fromConnectionFactory(redisConnectionFactory);
+        return builder.build();
     }
-
 }

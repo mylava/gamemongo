@@ -1,6 +1,5 @@
 package com.foolox.game.common.util;
 
-import com.alibaba.fastjson.TypeReference;
 import com.foolox.game.common.model.GameModel;
 import com.foolox.game.common.repo.domain.*;
 import com.foolox.game.common.util.event.UserDataEvent;
@@ -161,8 +160,8 @@ public class FooloxUtils {
      * @param gameRoomId
      * @return
      */
-    public static String setRoomIdByUserId(String userId, String gameRoomId) {
-        return redisService.set(GamePrefix.ROOM_USERID_GAMEROOMID, userId, gameRoomId);
+    public static void setRoomIdByUserId(String userId, String gameRoomId) {
+        redisService.set(GamePrefix.ROOM_USERID_GAMEROOMID, userId, gameRoomId);
     }
 
     /**

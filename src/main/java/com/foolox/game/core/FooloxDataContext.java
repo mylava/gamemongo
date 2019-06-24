@@ -17,6 +17,7 @@ public class FooloxDataContext {
     //游戏引擎
     private static GameEngine gameEngine;
 
+    //STAY 修改为枚举
     //与客户端交互使用的枚举
     public static final String FOOLOX_MESSAGE_EVENT = "command";
     public static final String FOOLOX_PLAYERS_EVENT = "players";

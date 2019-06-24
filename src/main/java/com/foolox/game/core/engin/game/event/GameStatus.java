@@ -1,5 +1,6 @@
 package com.foolox.game.core.engin.game.event;
 
+import com.foolox.game.common.result.CodeMessage;
 import com.foolox.game.constants.Command;
 import com.foolox.game.core.engin.game.Message;
 import lombok.Data;
@@ -22,4 +23,5 @@ public class GameStatus implements Message {
     private String playway;
     private boolean cardroom;
     private String event;
+    private CodeMessage codeMessage;
 }
