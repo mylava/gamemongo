@@ -48,8 +48,7 @@ public class StartedEventListener implements ApplicationListener<ContextRefreshe
         FooloxDataContext.setGameEngine(gameEngine);
 
         //加载运营机构信息、游戏分类信息
-        loadGameModel(loadORGI());
-//
+        loadGameModel(loadORG());
     }
 
     /**
@@ -57,9 +56,9 @@ public class StartedEventListener implements ApplicationListener<ContextRefreshe
      *
      * @return
      */
-    private String loadORGI() {
+    private String loadORG() {
         SysDic probe = new SysDic();
-        probe.setCode(FooloxDataContext.DIC_ORGI);
+        probe.setCode(FooloxDataContext.DIC_ORG);
         Example<SysDic> example = Example.of(probe);
         SysDic sysDic = null;
         try {
@@ -101,7 +100,7 @@ public class StartedEventListener implements ApplicationListener<ContextRefreshe
                     FooloxUtils.setDictByCode(gameModel.getCode(), model);
                     //缓存gameModel
                 }
-                FooloxUtils.setGamesByOrgi(FooloxDataContext.DIC_ORGI, gameModelList);
+                FooloxUtils.setGamesByOrg(FooloxDataContext.DIC_ORG, gameModelList);
             }
         } catch (Exception e) {
             log.error("加载GameModel配置失败！");

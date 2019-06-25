@@ -362,19 +362,19 @@ public class FooloxUtils {
 
     /**
      * 保存 机构 与 games 映射关系到缓存
-     * @param orgi
+     * @param org
      * @param gameModelList
      */
-    public static void setGamesByOrgi(String orgi, List<GameModel> gameModelList) {
-        redisService.set(SystemPrefix.GAMES, orgi, gameModelList);
+    public static void setGamesByOrg(String org, List<GameModel> gameModelList) {
+        redisService.set(SystemPrefix.GAMES, org, gameModelList);
     }
 
     /**
      * 通过 机构 从缓存中读取 games
-     * @param orgi
+     * @param org
      */
-    public static List<GameModel> getGamesByOrgi(String orgi) {
+    public static List<GameModel> getGamesByOrg(String org) {
         //STAY 取不到再从数据库加载一次
-        return redisService.getList(SystemPrefix.GAMES, orgi, GameModel.class);
+        return redisService.getList(SystemPrefix.GAMES, org, GameModel.class);
     }
 }
