@@ -6,20 +6,18 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * comment:
+ * comment: 错误信息
  *
  * @author: lipengfei
- * @date: 30/05/2019
+ * @date: 24/06/2019
  */
 @Data
 @NoArgsConstructor
-public class GameStatus implements Message {
-    //暂时无用
+public class CommonError implements Message {
     private Command command;
-    private String gamestatus;
-    private String userid;
-    private String gametype;
-    private String playway;
-    private boolean cardroom;
     private String event;
+    //错误代码
+    private int code;
+    //错误信息
+    private String info;
 }

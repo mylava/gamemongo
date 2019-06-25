@@ -13,6 +13,7 @@ import com.foolox.game.constants.*;
 import com.foolox.game.core.FooloxDataContext;
 import com.foolox.game.common.repo.domain.ClientSession;
 import com.foolox.game.core.engin.game.event.Board;
+import com.foolox.game.core.engin.game.event.CommonError;
 import com.foolox.game.core.engin.game.event.GameStatus;
 import com.foolox.game.core.engin.game.event.SearchRoomResult;
 import lombok.extern.slf4j.Slf4j;
@@ -155,50 +156,60 @@ public class GameEventHandler implements IWsMsgHandler {
      * @param fooloxClient
      */
     public void onJoinRoom(FooloxClient fooloxClient) {
-        String token = fooloxClient.getToken();
-        String userId = fooloxClient.getUserId();
-        if (!StringUtils.isBlank(token) && !StringUtils.isBlank(userId)) {
-            /**
-             * Token不为空，并且，验证Token有效，验证完毕即开始进行游戏撮合，房卡类型的
-             * 1、大厅房间处理
-             *    a、从房间队列里获取最近一条房间信息
-             *    b、将token对应玩家加入到房间
-             *    c、如果房间凑齐了玩家，则将房间从等待撮合队列中移除，放置到游戏中的房间信息，如果未凑齐玩家，继续扔到队列
-             *    d、通知房间的所有人，有新玩家加入
-             *    e、超时处理，增加AI进入房价
-             *    f、事件驱动
-             *    g、定时器处理
-             * 2、房卡房间处理
-             * 	  a、创建房间
-             * 	  b、加入到等待中队列
-             */
-            String redisToken = FooloxUtils.getTokenByUserId(userId);
-            //鉴权通过
-            if (redisToken != null && token.equals(redisToken)) {
-                //心跳开始时间
-                fooloxClient.setTime(System.currentTimeMillis());
-                //保存客户端，以备与客户端通信
-                FooloxClientContext.getFooloxClientCache().putClient(fooloxClient.getUserId(), fooloxClient);
-
-                ClientSession clientSession = FooloxUtils.getClientSessionById(userId);
-                if (null == clientSession) {
-                    log.error("登录用户已保存 ClientSession 到redis，clientSession 不应为空！");
-                }
-                //更新当前玩家状态，在线|离线
-                clientSession.setOnline(true);
-                //更新玩家类型为普通玩家
-                clientSession.setPlayerType(PlayerType.NORMAL);
-                //刷新玩家信息到缓存
-                FooloxUtils.setClientSessionById(userId, clientSession);
-
-                //之前占用的有房间，且游戏已经打完了，则清除
-                GameUtils.syncNotPlaying(clientSession);
-                //异步保存ClientSession到数据库 (登录日志)
-                FooloxUtils.published(clientSession, FooloxDataContext.getApplicationContext().getBean(ClientSessionRepository.class));
-                //请求游戏
-                FooloxDataContext.getGameEngine().gameRequest(clientSession, fooloxClient);
-            }
+        //参数校验
+        if (!checkAuthParams(fooloxClient)) {
+            return;
         }
+
+        /**
+         * Token不为空，并且，验证Token有效，验证完毕即开始进行游戏撮合，房卡类型的
+         * 1、大厅房间处理
+         *    a、从房间队列里获取最近一条房间信息
+         *    b、将token对应玩家加入到房间
+         *    c、如果房间凑齐了玩家，则将房间从等待撮合队列中移除，放置到游戏中的房间信息，如果未凑齐玩家，继续扔到队列
+         *    d、通知房间的所有人，有新玩家加入
+         *    e、超时处理，增加AI进入房价
+         *    f、事件驱动
+         *    g、定时器处理
+         * 2、房卡房间处理
+         * 	  a、创建房间
+         * 	  b、加入到等待中队列
+         */
+        //鉴权
+        if (!checkAuth(fooloxClient)) {
+            return;
+        }
+        //具体业务参数校验
+        String playwayId = fooloxClient.getPlaywayId();
+        log.info("playwayId={}", playwayId);
+        if (StringUtils.isBlank(playwayId)) {
+            CommonError commonError = new CommonError();
+            CodeMessage codeMessage = CodeMessage.PARAMS_EMPTY_ERROR.fillArgs("playwayId");
+            commonError.setCode(codeMessage.getCode());
+            commonError.setInfo(codeMessage.getMessage());
+            fooloxClient.sendEvent(FooloxDataContext.FOOLOX_GAMESTATUS_EVENT, commonError);
+            return;
+        }
+
+        String userId = fooloxClient.getUserId();
+        ClientSession clientSession = FooloxUtils.getClientSessionById(userId);
+        //心跳开始时间
+        fooloxClient.setTime(System.currentTimeMillis());
+        //保存客户端，以备与客户端通信
+        FooloxClientContext.getFooloxClientCache().putClient(fooloxClient.getUserId(), fooloxClient);
+        //更新当前玩家状态，在线|离线
+        clientSession.setOnline(true);
+        //更新玩家类型为普通玩家
+        clientSession.setPlayerType(PlayerType.NORMAL);
+        //刷新玩家信息到缓存
+        FooloxUtils.setClientSessionById(userId, clientSession);
+
+        //之前占用的有房间，且游戏已经打完了，则清除
+        GameUtils.syncNotPlaying(clientSession);
+        //异步保存ClientSession到数据库 (登录日志)
+        FooloxUtils.published(clientSession, FooloxDataContext.getApplicationContext().getBean(ClientSessionRepository.class));
+        //请求游戏
+        FooloxDataContext.getGameEngine().gameRequest(clientSession, fooloxClient);
     }
 
     /**
@@ -207,35 +218,19 @@ public class GameEventHandler implements IWsMsgHandler {
      * @param fooloxClient
      */
     public void onGameStatus(FooloxClient fooloxClient) {
-        String token = fooloxClient.getToken();
+        //参数校验
+        if (!checkAuthParams(fooloxClient)) {
+            return;
+        }
+        //鉴权
+        if (!checkAuth(fooloxClient)) {
+            return;
+        }
+
         String userId = fooloxClient.getUserId();
-        log.info("token={}, userId={}", token, userId);
-        GameStatus gameStatus = new GameStatus();
-        if (StringUtils.isBlank(token) || StringUtils.isBlank(userId)) {
-            gameStatus.setCodeMessage(CodeMessage.PARAMS_EMPTY_ERROR.fillArgs("token", "userId"));
-            //设置玩家为未就绪状态（不能游戏）
-            gameStatus.setGamestatus(PlayerGameStatus.NOTREADY.toString());
-            fooloxClient.sendEvent(FooloxDataContext.FOOLOX_GAMESTATUS_EVENT, gameStatus);
-        }
-
-        String redisToken = FooloxUtils.getTokenByUserId(userId);
-        log.info("redisToken={}", redisToken);
-        if (null == redisToken || !token.equals(redisToken)) {
-            gameStatus.setGamestatus(PlayerGameStatus.TIMEOUT.toString());
-            gameStatus.setCodeMessage(CodeMessage.ILLEGAL_TOKEN_ERROR.fillArgs("token", "userId"));
-            fooloxClient.sendEvent(FooloxDataContext.FOOLOX_GAMESTATUS_EVENT, gameStatus);
-        }
-
         ClientSession clientSession = FooloxUtils.getClientSessionById(userId);
-        log.info("clientSession={}", clientSession);
-        if (null == clientSession) {
-            gameStatus.setGamestatus(PlayerGameStatus.TIMEOUT.toString());
-            gameStatus.setCodeMessage(CodeMessage.ILLEGAL_TOKEN_ERROR.fillArgs("clientSession"));
-            fooloxClient.sendEvent(FooloxDataContext.FOOLOX_GAMESTATUS_EVENT, gameStatus);
-        }
-
-        log.info("user {} ready for game", userId);
-        gameStatus.setCodeMessage(CodeMessage.SUCCESS);
+        log.info("user {} is ready ", userId);
+        GameStatus gameStatus = new GameStatus();
         //鉴权通过，更新玩家状态为就绪（可以游戏）
         gameStatus.setGamestatus(PlayerGameStatus.READY.toString());
         //查看玩家是否在房间内
@@ -250,6 +245,7 @@ public class GameEventHandler implements IWsMsgHandler {
             gameStatus.setGametype(gamePlayway.getModelCode());
             gameStatus.setPlayway(gamePlayway.getId());
             //更新玩家状态为游戏中
+            log.info("user {} is playing, gameRoom = {}", userId, gameRoom);
             gameStatus.setGamestatus(PlayerGameStatus.PLAYING.toString());
             //房卡游戏
             if (gameRoom.isCardroom()) {
@@ -559,5 +555,58 @@ public class GameEventHandler implements IWsMsgHandler {
 //                ActionTaskUtils.sendEvent(Command.MESSAGE, new ChatMessage(),gameRoom);
             }
         }
+    }
+
+    /**
+     * 检查鉴权必填参数
+     *
+     * @return
+     */
+    private boolean checkAuthParams(FooloxClient fooloxClient) {
+        String token = fooloxClient.getToken();
+        String userId = fooloxClient.getUserId();
+        log.info("token={}, userId={}", token, userId);
+        if (StringUtils.isBlank(token) || StringUtils.isBlank(userId)) {
+            CommonError commonError = new CommonError();
+            CodeMessage codeMessage = CodeMessage.PARAMS_EMPTY_ERROR.fillArgs("token", "userId");
+            commonError.setCode(codeMessage.getCode());
+            commonError.setInfo(codeMessage.getMessage());
+            fooloxClient.sendEvent(FooloxDataContext.FOOLOX_GAMESTATUS_EVENT, commonError);
+            return false;
+        }
+        return true;
+    }
+
+    /**
+     * 鉴权
+     *
+     * @param fooloxClient
+     * @return
+     */
+    private boolean checkAuth(FooloxClient fooloxClient) {
+        String token = fooloxClient.getToken();
+        String userId = fooloxClient.getUserId();
+        String redisToken = FooloxUtils.getTokenByUserId(userId);
+        log.info("redisToken={}", redisToken);
+        if (null == redisToken || !token.equals(redisToken)) {
+            CommonError commonError = new CommonError();
+            CodeMessage codeMessage = CodeMessage.ILLEGAL_TOKEN_ERROR.fillArgs("token", "userId");
+            commonError.setCode(codeMessage.getCode());
+            commonError.setInfo(codeMessage.getMessage());
+            fooloxClient.sendEvent(FooloxDataContext.FOOLOX_GAMESTATUS_EVENT, commonError);
+            return false;
+        }
+
+        ClientSession clientSession = FooloxUtils.getClientSessionById(userId);
+        log.info("clientSession={}", clientSession);
+        if (null == clientSession) {
+            CommonError commonError = new CommonError();
+            CodeMessage codeMessage = CodeMessage.ILLEGAL_TOKEN_ERROR.fillArgs("clientSession");
+            commonError.setCode(codeMessage.getCode());
+            commonError.setInfo(codeMessage.getMessage());
+            fooloxClient.sendEvent(FooloxDataContext.FOOLOX_GAMESTATUS_EVENT, commonError);
+            return false;
+        }
+        return true;
     }
 }

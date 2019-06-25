@@ -54,7 +54,7 @@ public class CodeMessage {
 
     public CodeMessage fillArgs(Object... args) {
 //        int modelCode = this.modelCode;
-        this.message = String.format(this.message,args);
+        this.message = String.format("参数为空异常：%s",args);
         return this;
     }
 

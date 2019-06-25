@@ -1,6 +1,5 @@
 package com.foolox.game.core.engin.game;
 
-import com.foolox.game.common.result.CodeMessage;
 import com.foolox.game.constants.Command;
 
 /**
@@ -38,16 +37,4 @@ public interface Message {
      * @param event
      */
     void setEvent(String event);
-
-    /**
-     * 响应信息
-     */
-    CodeMessage getCodeMessage();
-
-    /**
-     * 响应信息
-     *
-     * @param errorMsg
-     */
-    void setCodeMessage(CodeMessage errorMsg);
 }

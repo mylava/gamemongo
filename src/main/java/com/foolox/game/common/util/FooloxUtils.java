@@ -75,8 +75,8 @@ public class FooloxUtils {
     public static String getRandomNumberChar(int length) {
         if (length > 1) {
             double random = (Math.random() * 9 + 1);
-            int pow = (int) Math.pow(10d, length);
-            return String.valueOf((int) random * pow);
+            int pow = (int) Math.pow(10d, length-1);
+            return String.valueOf((int) (random * pow));
         }
         return null;
     }

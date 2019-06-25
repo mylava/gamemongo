@@ -33,10 +33,10 @@ public class RedisConfig extends CachingConfigurerSupport {
         RedisTemplate<String, Object> template = new RedisTemplate<>();
 
         FastJsonRedisSerializer fastJsonRedisSerializer = new FastJsonRedisSerializer(Object.class);
-        template.setValueSerializer(fastJsonRedisSerializer);
-        template.setHashKeySerializer(fastJsonRedisSerializer);
         template.setKeySerializer(new StringRedisSerializer());
+        template.setValueSerializer(fastJsonRedisSerializer);
         template.setHashKeySerializer(new StringRedisSerializer());
+        template.setHashValueSerializer(fastJsonRedisSerializer);
 
         template.setConnectionFactory(redisConnectionFactory);
         return template;

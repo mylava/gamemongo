@@ -3,6 +3,7 @@ package com.foolox.game.core.server;
 import com.foolox.game.constants.RoomType;
 import com.foolox.game.core.engin.game.Message;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.tio.core.Aio;
 import org.tio.utils.json.Json;
 import org.tio.websocket.common.Opcode;
@@ -17,6 +18,7 @@ import java.util.Map;
  * @author: lipengfei
  * @date: 07/05/2019
  */
+@Slf4j
 @Data
 public class FooloxClient {
     private GameServer server;
@@ -40,6 +42,7 @@ public class FooloxClient {
 
     public void sendEvent(String event, Message msg) {
         try {
+            log.info("send to client: event={}, userId={}, message={}", event, userId, msg);
             msg.setEvent(event);
             Aio.sendToUser(this.server.getServerGroupContext(), this.userId, convertToTextResponse(msg));
         } catch (IOException e) {
