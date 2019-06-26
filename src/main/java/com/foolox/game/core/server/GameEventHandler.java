@@ -2,16 +2,18 @@ package com.foolox.game.core.server;
 
 import com.alibaba.fastjson.JSON;
 import com.foolox.game.common.repo.dao.ClientSessionRepository;
+import com.foolox.game.common.repo.domain.ClientSession;
 import com.foolox.game.common.repo.domain.GamePlayway;
 import com.foolox.game.common.repo.domain.GameRoom;
 import com.foolox.game.common.result.CodeMessage;
-import com.foolox.game.common.result.Result;
 import com.foolox.game.common.util.FooloxUtils;
 import com.foolox.game.common.util.GameUtils;
 import com.foolox.game.common.util.client.FooloxClientContext;
-import com.foolox.game.constants.*;
+import com.foolox.game.constants.ClientCommand;
+import com.foolox.game.constants.PlayerGameStatus;
+import com.foolox.game.constants.PlayerType;
+import com.foolox.game.constants.SearchRoomResultType;
 import com.foolox.game.core.FooloxDataContext;
-import com.foolox.game.common.repo.domain.ClientSession;
 import com.foolox.game.core.engin.game.event.Board;
 import com.foolox.game.core.engin.game.event.CommonError;
 import com.foolox.game.core.engin.game.event.GameStatus;
@@ -26,6 +28,7 @@ import org.tio.websocket.common.WsRequest;
 import org.tio.websocket.server.handler.IWsMsgHandler;
 
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -39,6 +42,8 @@ public class GameEventHandler implements IWsMsgHandler {
 
     protected GameServer server;
 
+    private List<CommandHandler> handlerList = new ArrayList<>();
+
     public GameServer getServer() {
         return server;
     }
@@ -47,6 +52,9 @@ public class GameEventHandler implements IWsMsgHandler {
         this.server = server;
     }
 
+    public void addHandler(CommandHandler commandHandler) {
+        handlerList.add(commandHandler);
+    }
     /**
      * 握手时走这个方法，业务可以在这里获取cookie，request参数等
      */
@@ -91,58 +99,18 @@ public class GameEventHandler implements IWsMsgHandler {
             FooloxClient fooloxClient = JSON.parseObject(text, FooloxClient.class);
             if (!StringUtils.isBlank(fooloxClient.getCommand())) {
                 fooloxClient.setServer(this.server);
-                switch (fooloxClient.getCommand()) {
-                    case "gamestatus":
-                        this.onGameStatus(fooloxClient);
+                String command = fooloxClient.getCommand();
+                CommandHandler handler = null;
+                for (CommandHandler h : handlerList) {
+                    if (h.getCommand().equals(command)) {
+                        handler = h;
                         break;
-                    case "joinroom":
-                        this.onJoinRoom(fooloxClient);
-                        break;
-                    case "docatch":
-                        this.onCatch(fooloxClient);
-                        break;
-                    case "giveup":
-                        this.onGiveup(fooloxClient);
-                        break;
-                    case "cardtips":
-                        this.onCardTips(fooloxClient);
-                        break;
-                    case "doplaycards":
-                        this.onPlayCards(fooloxClient);
-                        break;
-                    case "nocards":
-                        this.onNoCards(fooloxClient);
-                        break;
-                    case "selectcolor":
-                        this.onSelectColor(fooloxClient);
-                        break;
-                    case "selectaction":
-                        this.onActionEvent(fooloxClient);
-                        break;
-                    case "restart":
-                        this.onRestart(fooloxClient);
-                        break;
-                    case "start":
-                        this.onStart(fooloxClient);
-                        break;
-                    case "recovery":
-                        this.onRecovery(fooloxClient);
-                        break;
-                    case "leave":
-                        this.onLeave(fooloxClient);
-                        break;
-                    case "command":
-                        this.onCommand(fooloxClient);
-                        break;
-                    case "searchroom":
-                        this.onSearchRoom(fooloxClient);
-                        break;
-                    case "message":
-                        this.onMessage(fooloxClient);
-                        break;
-                    default:
-                        break;
-
+                    }
+                }
+                if (null!=handler) {
+                    handler.getMethod().invoke(handler.getHandler(), fooloxClient);
+                } else {
+                    log.info("command has no handler, command is {}", command);
                 }
             }
         }

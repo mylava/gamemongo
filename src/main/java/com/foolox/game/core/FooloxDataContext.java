@@ -3,6 +3,9 @@ package com.foolox.game.core;
 import com.foolox.game.core.engin.game.GameEngine;
 import org.springframework.context.ApplicationContext;
 
+import java.io.File;
+import java.io.FileFilter;
+
 /**
  * comment: 数据上下文
  *
@@ -49,5 +52,22 @@ public class FooloxDataContext {
 
     public static void setGameEngine(GameEngine engine) {
         gameEngine = engine;
+    }
+
+    /**
+     * 获取扫描的包下面所有的class文件
+     * @return
+     */
+    public static File[] getResources(String packagePath) {
+//        String path = classloader.getResource(PACKAGE_PATH).getPath();
+//        System.out.println(path);
+        File file = new File(packagePath);
+        return file.listFiles(new FileFilter() {
+            @Override
+            public boolean accept(File pathname) {
+                //只扫描class文件
+                return pathname.getName().endsWith(".class");
+            }
+        });
     }
 }

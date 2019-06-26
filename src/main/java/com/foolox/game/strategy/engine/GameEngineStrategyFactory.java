@@ -1,6 +1,8 @@
 package com.foolox.game.strategy.engine;
 
+import com.foolox.game.core.FooloxDataContext;
 import com.foolox.game.strategy.Organization;
+import com.foolox.game.strategy.login.LoginStrategyFactory;
 
 import java.io.File;
 import java.lang.annotation.Annotation;
@@ -14,7 +16,6 @@ import java.util.List;
  * @date: 25/06/2019
  */
 public class GameEngineStrategyFactory {
-    private static final String PACKAGE_PATH = GameEngineStrategyFactory.class.getResource("").getPath();
     private ClassLoader classloader = Thread.currentThread().getContextClassLoader();
 
     //存储所有策略
@@ -37,7 +38,7 @@ public class GameEngineStrategyFactory {
     private void init() {
         strategyList = new ArrayList<>();
         //获取到包下所有的class文件
-        File[] resources = getResources();
+        File[] resources = FooloxDataContext.getResources(GameEngineStrategyFactory.class.getResource("").getPath());
         Class<GameEngineStrategy> strategyClass = null;
         try {
             strategyClass = (Class<GameEngineStrategy>) classloader.loadClass(GameEngineStrategy.class.getName());//使用相同的加载器加载策略接口
@@ -56,14 +57,6 @@ public class GameEngineStrategyFactory {
                 e.printStackTrace();
             }
         }
-    }
-
-    //获取扫描的包下面所有的class文件
-    private File[] getResources() {
-//        String path = classloader.getResource(PACKAGE_PATH).getPath();
-//        System.out.println(path);
-        File file = new File(PACKAGE_PATH);
-        return file.listFiles(pathname -> pathname.getName().endsWith(".class"));
     }
 
     /**

@@ -1,3 +1,5 @@
+package cn.mylava;
+
 import com.foolox.game.Application;
 import com.foolox.game.common.repo.dao.AiConfigRepository;
 import com.foolox.game.common.repo.dao.GamePlaywayRepository;

@@ -23,8 +23,8 @@ public class DizhuStateMachineConfig {
     @Bean("dizhuStateMachine")
     public StateMachine create() throws Exception {
         StateMachine stateMachine = new StateMachine();
-        this.stateConfig(stateMachine.getStateContext());
-        this.configure(stateMachine);
+        stateConfig(stateMachine.getStateContext());
+        configure(stateMachine);
         return stateMachine;
     }
 

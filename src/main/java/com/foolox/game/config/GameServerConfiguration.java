@@ -2,10 +2,12 @@ package com.foolox.game.config;
 
 import com.foolox.game.core.server.GameEventHandler;
 import com.foolox.game.core.server.GameServer;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import javax.annotation.Resource;
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 
@@ -19,7 +21,8 @@ import java.security.NoSuchAlgorithmException;
 public class GameServerConfiguration {
     @Value("${foolox.server.port}")
     private Integer port;
-    private GameEventHandler handler = new GameEventHandler();
+    @Resource
+    private GameEventHandler handler;
 
     @Bean
     public GameServer socketIOServer() throws IOException {
